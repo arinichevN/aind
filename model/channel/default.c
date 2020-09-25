@@ -1,0 +1,32 @@
+#include "param.h"
+#include "main.h"
+#include "../../util/common.h"
+#include "../../acp/command/main.h"
+/*
+ * -user_config:
+ * put parameters for each channel in this array
+ * ChannelParam structure members:
+ * id,
+ * enable: YES or NO,
+ * remote_id,
+ * display_kind: DEVICE_KIND_MAX7219 or DEVICE_KIND_TM1637 or DEVICE_KIND_DSERIAL,
+ * display_text_alignment: DISPLAY_ALIGNMENT_LEFT or DISPLAY_ALIGNMENT_RIGHT,
+ * display_p1: DIN pin for display_kind=DEVICE_KIND_MAX7219; DIO pin for display_kind=DEVICE_KIND_TM1637; unused for display_kind=DEVICE_KIND_DSERIAL,
+ * display_p2: CLK pin for display_kind=DEVICE_KIND_MAX7219; CLK pin for display_kind=DEVICE_KIND_TM1637; unused for display_kind=DEVICE_KIND_DSERIAL,
+ * display_p3: CS pin for display_kind=DEVICE_KIND_MAX7219; unused for display_kind=DEVICE_KIND_TM1637; unused for display_kind=DEVICE_KIND_DSERIAL,
+ * mode: CHANNEL_MODE_SPY or CHANNEL_MODE_CLIENT,
+ * command: CMD_GETR_CHANNEL_FTS or CMD_GETR_CHANNEL_STATE or CMD_GETR_CHANNEL_ERROR or CMD_SET_CHANNEL_GOAL, (set commands are only for mode=CHANNEL_MODE_SPY)
+ * time: read timeout (ms) for mode=CHANNEL_MODE_SPY; poll interval (ms) for mode=CHANNEL_MODE_CLIENT,
+ * serial_id: SERIAL_ID0 or SERIAL_ID1 or SERIAL_ID2 or SERIAL_ID3
+ */
+const ChannelParam CHANNEL_DEFAULT_PARAMS[] = {
+	{51, YES, 21, DEVICE_KIND_MAX7219, DISPLAY_ALIGNMENT_RIGHT, 3,4,5, CHANNEL_MODE_CLIENT, CMD_GETR_CHANNEL_ERROR, 3000, SERIAL_ID1},
+	{52, YES, 22, DEVICE_KIND_MAX7219, DISPLAY_ALIGNMENT_RIGHT, 3,4,6, CHANNEL_MODE_CLIENT, CMD_GETR_CHANNEL_ERROR, 3000, SERIAL_ID1},
+	{53, YES, 23, DEVICE_KIND_MAX7219, DISPLAY_ALIGNMENT_RIGHT, 3,4,7, CHANNEL_MODE_CLIENT, CMD_GETR_CHANNEL_ERROR, 3000, SERIAL_ID1},
+	
+	//{51, YES, 21, DEVICE_KIND_TM1637, DISPLAY_ALIGNMENT_RIGHT, 4,3,0, CHANNEL_MODE_SPY, CMD_SET_CHANNEL_GOAL, 3000, SERIAL_ID1},
+	//{52, YES, 22, DEVICE_KIND_TM1637, DISPLAY_ALIGNMENT_RIGHT, 6,5,0, CHANNEL_MODE_SPY, CMD_SET_CHANNEL_GOAL, 3000, SERIAL_ID1},
+	//{53, YES, 23, DEVICE_KIND_TM1637, DISPLAY_ALIGNMENT_RIGHT, 8,7,0, CHANNEL_MODE_SPY, CMD_SET_CHANNEL_GOAL, 3000, SERIAL_ID1},
+};
+
+#define CHANNEL_COUNT (sizeof CHANNEL_DEFAULT_PARAMS / sizeof CHANNEL_DEFAULT_PARAMS[0])
