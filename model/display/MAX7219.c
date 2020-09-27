@@ -151,9 +151,6 @@ static void max7219_SCROLL_START(void *device){
 
 static void max7219_blinkLow (void *device){
 	MAX7219 *item = (MAX7219 *) device;
-	//uint8_t signs[MAX7219_SIGNS_COUNT];
-	//memset(signs, 0, sizeof signs);
-	//max7219_setSigns(item, signs);
 	max7219_clear(item);
 }
 

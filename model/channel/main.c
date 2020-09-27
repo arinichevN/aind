@@ -226,7 +226,7 @@ static void channel_printFloatInt(Channel *item, double v){
 }
 
 static void channel_parseNshowSpyNothing(Channel *item, char *buf){
-	channel_printError(item, CHANNEL_MSG_SPY_FAILED);
+	channel_printError(item, CHANNEL_MSG_NOPARSENSHOW);
 	printd("channel "); printd(item->id); printdln(": no parseNshow function");
 }
 
@@ -285,6 +285,7 @@ static int channel_parseNShowSpyRequestFloat(Channel *item, char *buf){
 }
 
 int channel_onSpyRequest(void *vitem, char *buf, int id, int command){
+	printdln(buf);
 	Channel *item = (Channel *) vitem;
 	item->need_spy_response = 0;
 	if(!item->enable){
@@ -304,17 +305,18 @@ int channel_onSpyRequest(void *vitem, char *buf, int id, int command){
 }
 
 void channel_onSpyResponse(void *vitem, char *buf, int id, int success){
+	printdln(buf);
 	Channel *item = (Channel *) vitem;
-	printd("channel "); printd(item->id); printdln(" wanted response detected");
+	printd("channel "); printd(item->id); printd(" wanted response detected ");
 	printd(buf);
 	if(!success){
 		item->need_spy_response = 0;
 		channel_printError(item, CHANNEL_MSG_SPY_FAILED);
-		printdln("printerror");
+		printdln("response: not success");
 		return;
 	}
 	if(!item->need_spy_response) {
-		printd("channel "); printd(item->id); printdln(" unwanted response"); 
+		//printd("channel "); printd(item->id); printdln(" unwanted response"); 
 		return;
 	}
 	if(id != item->remote_id){
@@ -332,9 +334,9 @@ void channel_setControlFunction(Channel *item){
 	switch(item->mode){
 		case CHANNEL_MODE_CLIENT:
 			switch(item->acp_command){
-				case CMD_GETR_CHANNEL_FTS:		item->control = channel_clientFTSGet; item->control_next = channel_clientWait; return;
-				case CMD_GETR_CHANNEL_STATE:	item->control = channel_clientStrGet; item->control_next = channel_clientWait; return;
-				case CMD_GETR_CHANNEL_ERROR:	item->control = channel_clientStrGet; item->control_next = channel_clientWait; return;
+				case CMD_GETR_CHANNEL_FTS:		item->control = channel_clientFTSGet; item->control_next = channel_clientFTSGet; return;
+				case CMD_GETR_CHANNEL_STATE:	item->control = channel_clientStrGet; item->control_next = channel_clientStrGet; return;
+				case CMD_GETR_CHANNEL_ERROR:	item->control = channel_clientStrGet; item->control_next = channel_clientStrGet; return;
 			}
 			break;
 		case CHANNEL_MODE_SPY:
@@ -461,7 +463,7 @@ static void channel_clientFTSGet(Channel *item){
 			channel_printError(item, CHANNEL_MSG_CLIENT_FAILED);
 			ton_reset(&item->tmr);
 			item->control = channel_clientWait;
-			printd(item->id); printdln(" fts: failed: "); printd(" str: failed: "); printd(acp_getStateStr(r)); printdln(" ");
+			printd(item->id); printd(" fts: failed: "); printd(acp_getStateStr(r)); printdln(" ");
 			break;
 	}
 	display_controln(item->display);

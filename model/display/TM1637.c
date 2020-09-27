@@ -215,9 +215,6 @@ static void tm1637_SCROLL_START(void *device){
 
 static void tm1637_blinkLow (void *device){
 	TM1637 *item = (TM1637 *) device;
-	//uint8_t signs[TM1637_SIGNS_COUNT];
-	//memset(signs, 0, sizeof signs);
-	//tm1637_setSigns(item, signs);
 	tm1637_clear(item);
 }
 
