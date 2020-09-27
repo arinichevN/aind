@@ -38,8 +38,8 @@ static int channelParam_check(const ChannelParam *item){
 		return ERROR_PARAM;
 	}
 	switch(item->mode){
-		case CHANNEL_MODE_SPY:
-		case CHANNEL_MODE_CLIENT:
+		case SERIAL_MODE_SPY:
+		case SERIAL_MODE_CLIENT:
 			break;
 		default:
 			printd("channelParam_check(): bad mode where id = "); printdln(item->id);
@@ -74,7 +74,7 @@ static int channelParam_check(const ChannelParam *item){
 	}
 	switch(item->acp_command){
 		case CMD_SET_CHANNEL_GOAL:
-		if(item->mode != CHANNEL_MODE_SPY){
+		if(item->mode != SERIAL_MODE_SPY){
 			printd("channelParam_check(): spy mode expected for set acp command where id = "); printdln(item->id);
 			return ERROR_PARAM;
 		}
@@ -332,14 +332,14 @@ void channel_onSpyResponse(void *vitem, char *buf, int id, int success){
 void channel_setControlFunction(Channel *item){
 	item->control = NULL;
 	switch(item->mode){
-		case CHANNEL_MODE_CLIENT:
+		case SERIAL_MODE_CLIENT:
 			switch(item->acp_command){
 				case CMD_GETR_CHANNEL_FTS:		item->control = channel_clientFTSGet; item->control_next = channel_clientFTSGet; return;
 				case CMD_GETR_CHANNEL_STATE:	item->control = channel_clientStrGet; item->control_next = channel_clientStrGet; return;
 				case CMD_GETR_CHANNEL_ERROR:	item->control = channel_clientStrGet; item->control_next = channel_clientStrGet; return;
 			}
 			break;
-		case CHANNEL_MODE_SPY:
+		case SERIAL_MODE_SPY:
 			switch(item->acp_command){
 				case CMD_GETR_CHANNEL_FTS:
 				case CMD_GETR_CHANNEL_STATE:
@@ -354,7 +354,7 @@ void channel_setControlFunction(Channel *item){
 size_t channels_countSpys(ChannelLList *channels){
 	size_t c = 0;
 	FOREACH_CHANNEL(channels){
-		if(channel->mode == CHANNEL_MODE_SPY){
+		if(channel->mode == SERIAL_MODE_SPY){
 			c++;
 		}
 	}
@@ -364,7 +364,7 @@ size_t channels_countSpys(ChannelLList *channels){
 size_t channels_countSpysForSerial(ChannelLList *channels, int serial_id){
 	size_t c = 0;
 	FOREACH_CHANNEL(channels){
-		if(channel->mode == CHANNEL_MODE_SPY && channel->serial_id == serial_id){
+		if(channel->mode == SERIAL_MODE_SPY && channel->serial_id == serial_id){
 			c++;
 		}
 	}
@@ -374,7 +374,7 @@ size_t channels_countSpysForSerial(ChannelLList *channels, int serial_id){
 size_t channels_assignToSpySerial(ChannelLList *channels,  AppSerial *serial){
 	size_t assigned_channels_count = 0;
 	FOREACH_CHANNEL(channels){
-		if(channel->mode == CHANNEL_MODE_SPY && channel->serial_id == serial->id){
+		if(channel->mode == SERIAL_MODE_SPY && channel->serial_id == serial->id){
 			acply_addClient((ACPLY *) serial->controller, (void *) channel);
 			assigned_channels_count++;
 		}
@@ -387,7 +387,7 @@ int channels_coopSerials(ChannelLList *channels, AppSerial serials[]){
 	size_t assigned_spy_channels = 0;
 	FOREACH_SERIAL(i){
 		AppSerial *serial = &serials[i];
-		if(serial->kind == APP_SERIAL_KIND_SPY){
+		if(serial->mode == SERIAL_MODE_SPY){
 			size_t sc = channels_countSpysForSerial(channels, serial->id);
 			printd("serial"); printd(serial->id); printd(" number of spy channels: "); printdln(sc);
 			if(sc > 0){
@@ -403,7 +403,7 @@ int channels_coopSerials(ChannelLList *channels, AppSerial serials[]){
 		return 0;
 	}
 	FOREACH_CHANNEL(channels){
-		if(channel->mode == CHANNEL_MODE_CLIENT){
+		if(channel->mode == SERIAL_MODE_CLIENT){
 			channel->acplcm = NULL;
 			AppSerial *serial = appSerials_getClientSerialById(serials, channel->serial_id);
 			if(serial != NULL){

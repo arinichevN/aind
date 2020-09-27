@@ -4,7 +4,7 @@
 typedef struct {
 	int rate;
 	int config;
-	int kind;
+	int mode;
 	int id;
 } AppSerialConfig;
 
@@ -18,11 +18,11 @@ typedef struct {
 
 APPCONFIGSR_DEC_GET_FIELD_FUNC(rate)
 APPCONFIGSR_DEC_GET_FIELD_FUNC(config)
-APPCONFIGSR_DEC_GET_FIELD_FUNC(kind)
+APPCONFIGSR_DEC_GET_FIELD_FUNC(mode)
 
 APPCONFIGSR_DEC_SET_FIELD_FUNC(rate)
 APPCONFIGSR_DEC_SET_FIELD_FUNC(config)
-APPCONFIGSR_DEC_SET_FIELD_FUNC(kind)
+APPCONFIGSR_DEC_SET_FIELD_FUNC(mode)
 
 
 #endif

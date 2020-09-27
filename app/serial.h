@@ -4,8 +4,6 @@
 #include "../util/serial.h"
 #include "../acp/loop/main.h"
 #include "../acp/loop/server.h"
-#include "../acp/loop/client/main.h"
-#include "../acp/loop/spy.h"
 #include "serial_config.h"
 
 #define S0 0
@@ -40,7 +38,7 @@ typedef struct app_serial_st {
 	int id; //SerialIdE from util/serial.h
 	HardwareSerial *device;
 	void *controller;
-	int kind;
+	int mode;
 	void (*control) (struct app_serial_st *);
 	void (*free) (struct app_serial_st *);
 } AppSerial;
@@ -48,8 +46,8 @@ typedef struct app_serial_st {
 
 extern void appSerials_init(AppSerial serials[]);
 extern int appSerial_beginKind(AppSerial *serial, AppSerialConfig *config, HardwareSerial **serial_debug);
-extern void appSerial_free(AppSerial *serial);
 extern void appSerials_control(AppSerial serials[]);
 extern AppSerial *appSerials_getClientSerialById(AppSerial serials[], int id);
+#define appSerial_free(item) item->free(item)
 
 #endif

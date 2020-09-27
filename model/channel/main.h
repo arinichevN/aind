@@ -8,6 +8,7 @@
 #include "../../acp/main.h"
 #include "../../acp/loop/main.h"
 #include "../../acp/loop/client/multi.h"
+#include "../../acp/loop/spy.h"
 #include "../display/main.h"
 #include "param.h"
 
@@ -23,11 +24,6 @@
 
 
 #define CHANNEL_FLOAT_PRECISION			2
-
-enum ChannelModeE {
-	CHANNEL_MODE_SPY,
-	CHANNEL_MODE_CLIENT
-};
 
 struct channel_st {
 	int id;
