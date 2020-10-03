@@ -162,7 +162,8 @@ void tm1637_printBlinkStr(void *device, const char *str, int alignment){
 	}
 }
 
-void tm1637_clear(TM1637 *item){
+void tm1637_clear(void *device){
+	TM1637 *item = (TM1637 *) device;
 	tm1637_start(item);
 	tm1637_write(item, TM1637_I2C_COMM1);
 	tm1637_stop(item);
@@ -181,7 +182,8 @@ void tm1637_clear(TM1637 *item){
 
 static void tm1637_IDLE(void *device){
 	TM1637 *item = (TM1637 *) device;
-	item->blink.control(&item->blink);
+	Blink *blink = &item->blink;
+	CONTROL(blink);
 }
 
 static void tm1637_SCROLL(void *device){
@@ -202,7 +204,8 @@ static void tm1637_SCROLL(void *device){
 		tm1637_setSigns(item, item->signs);
 		item->i++;
 	}
-	item->blink.control(&item->blink);
+	Blink *blink = &item->blink;
+	CONTROL(blink);
 }
 
 static void tm1637_SCROLL_START(void *device){
@@ -214,8 +217,7 @@ static void tm1637_SCROLL_START(void *device){
 }
 
 static void tm1637_blinkLow (void *device){
-	TM1637 *item = (TM1637 *) device;
-	tm1637_clear(item);
+	tm1637_clear(device);
 }
 
 static void tm1637_blinkHigh (void *device){

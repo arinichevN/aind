@@ -9,3 +9,7 @@ void dserial_printBlinkStr(void *device, const char *str, int alignment){
 void dserial_control(void *device){
 	;
 }
+
+void dserial_clear(void *device){
+	;
+}

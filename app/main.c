@@ -3,9 +3,11 @@
 extern ChannelLList channels;
 extern AppSerial serials[];
 
-
-
 void app_begin(App *item);
+
+void app_INIT(App *item){
+	app_begin(item);
+}
 
 void app_OFF(App *item){
 	;
@@ -13,6 +15,34 @@ void app_OFF(App *item){
 
 void app_FAILURE(App *item){
 	;
+}
+
+void app_FREE(App *item){
+	FOREACH_CHANNEL(&channels){
+		channel_free(channel);
+	}
+	FOREACH_SERIAL(i){
+		AppSerial *serial = &serials[i];
+		appSerial_free(serial);
+	}
+	item->control = app_INIT;
+}
+
+void app_WAIT_CHANNELS(App *item){
+	FOREACH_CHANNEL(&channels){
+		CONTROL(channel);
+	}
+	appSerials_control(serials);
+	if(!channels_activeExists(&channels)){
+		item->control = app_FREE;
+	}
+}
+
+void app_RESET(App *item){
+	FOREACH_CHANNEL(&channels){
+		channel_disconnect(channel);
+	}
+	item->control = app_WAIT_CHANNELS;
 }
 
 void app_RUN(App *item){
@@ -24,11 +54,7 @@ void app_RUN(App *item){
 		}
 	}
 	appSerials_control(serials);
-	appei_control(&item->error_indicator, item->error_id);
-}
-
-void app_INIT(App *item){
-	app_begin(item);
+	APPEI_CONTROL(&item->error_indicator, item->error_id);
 }
 
 //time for attempt to upload sketch in case of error
@@ -75,30 +101,39 @@ void app_begin(App *item){
 	item->error_id = ERROR_NO;
 	app_uploadDelay();
 	appei_begin(&item->error_indicator, INDICATOR_PIN);
+	pinMode(DEFAULT_CONTROL_PIN, INPUT_PULLUP);
+	int default_btn = digitalRead(DEFAULT_CONTROL_PIN);
+	//int default_btn = BUTTON_DOWN;
 	//Serial.begin(9600, SERIAL_8N1);while(!Serial){;}DEBUG_SERIAL_DEVICE = &Serial;
 	appSerials_init(serials);
 	AppConfig config;
-	item->error_id = appConfig_begin(&config);
+	item->error_id = appConfig_begin(&config, default_btn);
 	if(item->error_id != ERROR_NO){goto err;}
 	item->id = config.id;
 	FOREACH_SERIAL(i){
 		item->error_id = appSerial_beginMode(&serials[i], &config.serial[i], &DEBUG_SERIAL_DEVICE);
 		if(item->error_id != ERROR_NO) goto err;
 	}
-	delay(300);
-	channels_begin(&channels);
+	delay(100);
+	channels_begin(&channels, default_btn);
 	delay(300);
 	if(!channels_coopSerials(&channels, serials)){
 		item->error_id = ERROR_SUBBLOCK;
 		goto err;
 	}
-	delay(300);
+	delay(100);
+	printdln("coop done");
+	delay(100);
 	item->control = app_RUN;
 	return;
 	
 	err:
-	appei_control(&item->error_indicator, item->error_id);
+	APPEI_CONTROL(&item->error_indicator, item->error_id);
 	item->control = app_FAILURE;
+}
+
+void app_reset(App *item){
+	item->control = app_RESET;
 }
 
 void app_init(App *item){

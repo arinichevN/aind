@@ -11,6 +11,10 @@
 typedef struct {
 	void *device;
 	int kind;
+	int p1;
+	int p2;
+	int p3;
+	void (*clear) (void *);
 	void (*printStr) (void *, const char *, int);
 	void (*printBlinkStr) (void *, const char *, int);
 	void (*control) (void *);
@@ -18,16 +22,20 @@ typedef struct {
 
 extern int display_begin(Display *item, int device_kind, int p1, int p2, int p3);
 
-#define display_control(D) (D)->control((D)->device)
+extern void display_free(Display *item);
 
-#define display_controln(D) D.control(D.device)
+#define DISPLAY_CONTROL(D) (D)->control((D)->device)
 
-#define display_printStr(D, STR, ALIGN) (D)->printStr((D)->device, STR, ALIGN)
+#define DISPLAY_CONTROLN(D) D.control(D.device)
 
-#define display_printBlinkStr(D, STR, ALIGN) (D)->printBlinkStr((D)->device, STR, ALIGN)
+#define DISPLAY_PRINT_STR(D, STR, ALIGN) (D)->printStr((D)->device, STR, ALIGN)
 
-#define display_printStrn(D, STR, ALIGN) (D).printStr((D).device, STR, ALIGN)
+#define DISPLAY_PRINT_BLINK_STR(D, STR, ALIGN) (D)->printBlinkStr((D)->device, STR, ALIGN)
 
-#define display_printBlinkStrn(D, STR, ALIGN) (D).printBlinkStr((D).device, STR, ALIGN)
+#define DISPLAY_CLEARN(D) (D).clear((D).device)
+
+#define DISPLAY_PRINT_STRN(D, STR, ALIGN) (D).printStr((D).device, STR, ALIGN)
+
+#define DISPLAY_PRINT_BLINK_STRN(D, STR, ALIGN) (D).printBlinkStr((D).device, STR, ALIGN)
 
 #endif

@@ -9,8 +9,9 @@ static int appConfig_check (AppConfig *item){
 	return r;
 }
 
-#define APP_SET_DEFAULT_SERIAL_CONFIG_SPY		item->serial[i].rate = DEFAULT_APP_SERIAL_RATE; item->serial[i].config = DEFAULT_APP_SERIAL_CONFIG; item->serial[i].mode = SERIAL_MODE_SPY; item->serial[i].id = sid; i++;
+#define APP_SET_DEFAULT_SERIAL_CONFIG_SERVER	item->serial[i].rate = DEFAULT_APP_SERIAL_RATE; item->serial[i].config = DEFAULT_APP_SERIAL_CONFIG; item->serial[i].mode = SERIAL_MODE_SERVER; item->serial[i].id = sid; i++;
 #define APP_SET_DEFAULT_SERIAL_CONFIG_CLIENT	item->serial[i].rate = DEFAULT_APP_SERIAL_RATE; item->serial[i].config = DEFAULT_APP_SERIAL_CONFIG; item->serial[i].mode = SERIAL_MODE_CLIENT; item->serial[i].id = sid; i++;
+#define APP_SET_DEFAULT_SERIAL_CONFIG_SPY		item->serial[i].rate = DEFAULT_APP_SERIAL_RATE; item->serial[i].config = DEFAULT_APP_SERIAL_CONFIG; item->serial[i].mode = SERIAL_MODE_SPY; item->serial[i].id = sid; i++;
 #define APP_SET_DEFAULT_SERIAL_CONFIG_DEBUG		item->serial[i].rate = DEFAULT_APP_SERIAL_RATE; item->serial[i].config = DEFAULT_APP_SERIAL_CONFIG; item->serial[i].mode = SERIAL_MODE_DEBUG; item->serial[i].id = sid; i++;
 #define APP_SET_DEFAULT_SERIAL_CONFIG_IDLE		item->serial[i].rate = DEFAULT_APP_SERIAL_RATE; item->serial[i].config = DEFAULT_APP_SERIAL_CONFIG; item->serial[i].mode = SERIAL_MODE_IDLE; item->serial[i].id = sid; i++;
 
@@ -33,28 +34,37 @@ static void appConfig_setDefault(AppConfig *item){
 	sid = SERIAL_ID1;
 	
 	//-user_config:
-	APP_SET_DEFAULT_SERIAL_CONFIG_CLIENT
+	APP_SET_DEFAULT_SERIAL_CONFIG_SERVER
 	
 #endif
 #ifdef USE_SERIAL2
 	sid = SERIAL_ID2;
 	
 	//-user_config:
-	APP_SET_DEFAULT_SERIAL_CONFIG_SPY
+	APP_SET_DEFAULT_SERIAL_CONFIG_IDLE
 	
 #endif
 #ifdef USE_SERIAL3
 	sid = SERIAL_ID3;
 	
 	//-user_config:
-	APP_SET_DEFAULT_SERIAL_CONFIG_SPY
+	APP_SET_DEFAULT_SERIAL_CONFIG_IDLE
 	
 #endif
 }
 
-int appConfig_begin(AppConfig *item){
-	appConfig_setDefault(item);
-	printd("set default app\n");
+int appConfig_begin(AppConfig *item, int btn){
+	if(btn == BUTTON_DOWN){
+		appConfig_setDefault(item);
+		pmem_saveAppConfig(item);
+		printd("set default app\n");
+	}else{
+		int r = pmem_getAppConfig(item);
+		if(!r){
+			printd("failed to get app\n");
+			return ERROR_PMEM_READ;
+		}
+	}
 	return appConfig_check(item);
 }
 

@@ -7,7 +7,8 @@ static void max7219_write(MAX7219 *item, volatile uint8_t reg, volatile uint8_t 
     digitalWrite(item->cs, HIGH);
 } 
 
-void max7219_clear(MAX7219 *item) {
+void max7219_clear(void *device) {
+	MAX7219 *item = (MAX7219 *) device;
     for(int i = MAX7219_REG_FIRST_DIGIT; i < MAX7219_REG_FIRST_DIGIT + MAX7219_SIGNS_COUNT; i++) {
         max7219_write(item, i, 0x00);
     }
@@ -116,7 +117,8 @@ void max7219_printBlinkStr(void *device, const char *str, int alignment){
 
 static void max7219_IDLE(void *device){
 	MAX7219 *item = (MAX7219 *)device;
-	item->blink.control(&item->blink);
+	Blink *blink = &item->blink;
+	CONTROL(blink);
 }
 
 static void max7219_SCROLL(void *device){
@@ -138,7 +140,8 @@ static void max7219_SCROLL(void *device){
 		max7219_setSigns(item, signs);
 		item->i++;
 	}
-	item->blink.control(&item->blink);
+	Blink *blink = &item->blink;
+	CONTROL(blink);
 }
 
 static void max7219_SCROLL_START(void *device){
@@ -150,8 +153,7 @@ static void max7219_SCROLL_START(void *device){
 }
 
 static void max7219_blinkLow (void *device){
-	MAX7219 *item = (MAX7219 *) device;
-	max7219_clear(item);
+	max7219_clear(device);
 }
 
 static void max7219_blinkHigh (void *device){
@@ -184,7 +186,7 @@ void max7219_begin(MAX7219 *item, int din, int clk, int cs){
 	max7219_write(item, MAX7219_REG_DECODE_MODE, MAX7219_DECODE_MODE);
 	max7219_write(item, MAX7219_REG_SHUTDOWN, MAX7219_SHUTDOWN_STOP);
 	max7219_write(item, MAX7219_REG_DISPLAY_TEST, MAX7219_DISPLAY_TEST_STOP);
-	max7219_clear(item);
+	max7219_clear((void *) item);
 	max7219_setBrightness(item, MAX7219_BRIGHTNESS);
 	ton_setInterval(&item->tmr, DISPLAY_SCROLL_INTERVAL_MS);
 	ton_reset(&item->tmr);

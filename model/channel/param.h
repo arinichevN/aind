@@ -14,6 +14,7 @@ typedef struct {
 	int remote_id;
 	int acp_command;
 	unsigned long time;
+	int float_precision;
 } ChannelParam;
 
 #define CHANNEL_DEFAULT_PARAMS chdefps

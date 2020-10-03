@@ -10,6 +10,43 @@
 
 /*
  * -user_config:
+ * if digitalRead(DEFAULT_CONTROL_PIN) returns BUTTON_DOWN on system startup,
+ * all application and channels settings will be set to default values.
+ * You can find default values in ./app/main.c, ./app/main.h, ./model/channel/default.c
+ * files.
+ */
+#define DEFAULT_CONTROL_PIN 2
+
+/*
+ * -user_config:
+ * uncomment the following line if you want to enable serial server,
+ * this allows you to communicate with device over serial interface
+ */
+//#define SERIAL_SERVER
+
+/*
+ * -user_config:
+ * uncomment the following line if you want to get parameters values from
+ * RAM over serial interface
+ */
+#define SERIAL_SERVER_RAM_GET_COMMANDS
+
+/*
+ * -user_config:
+ * uncomment the following line if you want to get parameters values from
+ * NVRAM over serial interface
+ */
+#define SERIAL_SERVER_NVRAM_GET_COMMANDS
+
+/*
+ * -user_config:
+ * uncomment the following line if you want to set parameters values to
+ * NVRAM over serial interface
+ */
+#define SERIAL_SERVER_NVRAM_SET_COMMANDS
+
+/*
+ * -user_config:
  * uncomment serial interfaces you want to use:
  */
 #define WANT_SERIAL0

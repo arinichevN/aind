@@ -18,14 +18,12 @@ typedef struct app_st{
 	void (*control)(struct app_st *);
 } App;
 
-
 extern int appc_checkId(int v);
 extern int appc_checkSerialRate(int v);
 extern int appc_checkSerialConfig(int v);
 
 extern void app_init(App *item);
 extern void app_reset(App *item);
-extern void app_control(App *item);
 
 extern const char *app_getErrorStr(App *item);
 extern const char *app_getStateStr(App *item);

@@ -107,7 +107,8 @@ void acply_READ_REQUEST(ACPLY *item, HardwareSerial *serial) {
 void acply_CONSIDER_REQUEST(ACPLY *item, HardwareSerial *serial) {
 	ACPL *acpl = item->acpl;
 	if(acp_packCheckCRC(acpl->buf)){
-		if(acpl->buf[ACP_IND_SIGN] == ACP_SIGN_REQUEST){
+		char sign = acpl->buf[ACP_IND_SIGN];
+		if(sign == ACP_SIGN_REQUEST_GET || sign == ACP_SIGN_REQUEST_SET || sign == ACP_SIGN_REQUEST_SET_BROADCAST || sign == ACP_SIGN_REQUEST_GET_BROADCAST){
 			int cmd;
 			if(!acp_packGetCellI(acpl->buf, ACP_REQUEST_IND_CMD, &cmd)){
 				//printdln("request: failed to read cmd");

@@ -51,7 +51,7 @@ extern void max7219_printStr(void *device, const char *str, int alignment);
 
 extern void max7219_printBlinkStr(void *device, const char *str, int alignment);
 
-extern void max7219_clear(MAX7219 *item);
+extern void max7219_clear(void *device);
 
 extern void max7219_setBrightness (MAX7219 *item, uint8_t brightness);
 

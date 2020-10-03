@@ -1,6 +1,5 @@
 #include "serial.h"
 
-
 static void appSerial_controlIdle(AppSerial *item){
 	;
 }
@@ -8,31 +7,6 @@ static void appSerial_controlIdle(AppSerial *item){
 static void appSerial_freeIdle(AppSerial *serial){
 	;
 }
-
-#ifdef SERIAL_SERVER
-static void appSerial_controlServer(AppSerial *item){
-	ACPLS *controller = (ACPLS *) item->controller;
-	acpls_control(controller, item->device);
-}
-
-static void appSerial_freeServer(AppSerial *serial){
-	ACPLS *item = (ACPLS *) serial->controller;
-	acpls_free(item);
-}
-
-static int appSerial_beginServer(AppSerial *item){
-	ACPLS *controller = NULL;
-	if(!acpls_begin(&controller)) {
-		printd("server begin failed where id = "); printdln(item->id);
-		return 0;
-	}
-	item->controller = (void *) controller;
-	item->control = appSerial_controlServer;
-	item->free = appSerial_freeServer;
-	return 1;
-}
-#endif
-
 
 void appSerials_reset(AppSerial serials[]){
 	FOREACH_SERIAL(i){
@@ -75,8 +49,70 @@ static void appSerial_beginDevice(AppSerialConfig *item, HardwareSerial *serial)
 	}
 }
 
+#ifdef SERIAL_SERVER
+static void appSerial_controlServer(AppSerial *item){
+	ACPLS *controller = (ACPLS *) item->controller;
+	acpls_control(controller, item->device);
+}
+
+static void appSerial_freeServer(AppSerial *serial){
+	ACPLS *item = (ACPLS *) serial->controller;
+	acpls_free(item);
+}
+
+static int appSerial_beginServer(AppSerial *item){
+	ACPLS *controller = NULL;
+	if(!acpls_begin(&controller)) {
+		printd("server begin failed where id = "); printdln(item->id);
+		return 0;
+	}
+	item->controller = (void *) controller;
+	item->control = appSerial_controlServer;
+	item->free = appSerial_freeServer;
+	return 1;
+}
+#endif
+
+static void appSerial_controlClient(AppSerial *item){
+	ACPLCM *controller = (ACPLCM *) item->controller;
+	acplcm_control(controller, item->device);
+}
+
+static void appSerial_controlSpy(AppSerial *item){
+	ACPLY *controller = (ACPLY *) item->controller;
+	acply_control(controller, item->device);
+}
+
+static void appSerial_freeSpy(AppSerial *serial){
+	ACPLY *item = (ACPLY *) serial->controller;
+	acply_free(item);
+}
+
+static void appSerial_freeClient(AppSerial *serial){
+	ACPLCM *item = (ACPLCM *) serial->controller;
+	acplcm_free(item);
+}
+
+static int appSerial_beginClient(AppSerial *item){
+	ACPLCM *controller = NULL;
+	if(!acplcm_begin(&controller)) return 0;
+	item->controller = (void *) controller;
+	item->control = appSerial_controlClient;
+	item->free = appSerial_freeClient;
+	return 1;
+}
+
+static int appSerial_beginSpy(AppSerial *item){
+	ACPLY *controller = NULL;
+	if(!acply_begin(&controller)) return 0;
+	item->controller = (void *) controller;
+	item->control = appSerial_controlSpy;
+	item->free = appSerial_freeSpy;
+	return 1;
+}
+
 int appSerial_beginMode(AppSerial *serial, AppSerialConfig *config, HardwareSerial **serial_debug){
-	printd("serial"); printd(serial->id);
+	printd("serial "); printd(serial->id);printd(": ");
 	switch (config->mode){
 #ifdef SERIAL_SERVER
 		case SERIAL_MODE_SERVER:
@@ -88,16 +124,32 @@ int appSerial_beginMode(AppSerial *serial, AppSerialConfig *config, HardwareSeri
 			printdln(": server");
 			break;
 #endif
+		case SERIAL_MODE_CLIENT:
+			appSerial_beginDevice(config, serial->device);
+			if(!appSerial_beginClient(serial)){
+				 return ERROR_SERIAL_BEGIN;
+			}
+			serial->mode = config->mode;
+			printdln(" client");
+			break;
+		case SERIAL_MODE_SPY:
+			appSerial_beginDevice(config, serial->device);
+			if(!appSerial_beginSpy(serial)){
+				 return ERROR_SERIAL_BEGIN;
+			}
+			serial->mode = config->mode;
+			printdln(" spy");
+			break;
 		case SERIAL_MODE_DEBUG:
 			if(*serial_debug == NULL){
 				appSerial_beginDevice(config, serial->device);
 				*serial_debug = serial->device;
 				serial->mode = config->mode;
-				printdln(": debug");
+				printdln(" debug");
 			}
 			break;
 		default:
-			printdln(": unknown");
+			printdln(" unknown");
 			break;
 	}
 	return ERROR_NO;

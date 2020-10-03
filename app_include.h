@@ -9,6 +9,8 @@
 #include "util/serial.c"
 #include "util/caller_queue.c"
 
+#include "pmem/main.c"
+
 #include "model/display/blink.c"
 #include "model/display/common.c"
 #include "model/display/dserial.c"
@@ -21,16 +23,20 @@
 
 #include "acp/main.c"
 #include "acp/loop/main.c"
+
 #include "acp/loop/client/main.c"
 #include "acp/loop/client/multi.c"
 #include "acp/loop/spy.c"
 
+#ifdef SERIAL_SERVER
+#include "app/server_config.c"
+#include "acp/loop/server.c"
+#endif
 
 #include "app/error_indicator.c"
 #include "app/serial_config.c"
 #include "app/config.c"
 #include "app/serial.c"
 #include "app/main.c"
-
 
 #endif 

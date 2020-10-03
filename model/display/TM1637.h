@@ -45,7 +45,7 @@ extern void tm1637_printStr(void *device, const char *str, int alignment);
 
 extern void tm1637_printBlinkStr(void *device, const char *str, int alignment);
 
-extern void tm1637_clear(TM1637 *item);
+extern void tm1637_clear(void *device);
 
 extern void tm1637_control(void *device);
 

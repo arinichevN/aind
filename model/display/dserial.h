@@ -8,6 +8,7 @@
 
 #include "common.h"
 
+extern void dserial_clear(void *device);
 
 extern void dserial_printStr(void *device, const char *str, int alignment);
 
