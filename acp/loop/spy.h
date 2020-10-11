@@ -1,7 +1,6 @@
 #ifndef ACPL_SPY_H
 #define ACPL_SPY_H
 
-#include "../../util/dstructure.h"
 #include "main.h"
 
 typedef struct acply_client_st{
@@ -10,7 +9,10 @@ typedef struct acply_client_st{
 	void (*onResponseFunction)(void *, char *, int, int);
 } ACPLYClient;
 
-DEC_LIST(ACPLYClient)
+typedef struct {
+	ACPLYClient *items;
+	size_t length;
+}ACPLYClientList;
 
 typedef struct acply_st{
 	int last_id;

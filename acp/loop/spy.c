@@ -1,28 +1,31 @@
 #include "spy.h"
 
+#define ACPLY_CLIENT_LIST client_list
+#define ACPLY_DEF_CLIENT_LIST ACPLYClientList *ACPLY_CLIENT_LIST = &item->client_list;
+#define ACPLY_FOREACH_CLIENT  for(size_t i=0; i<ACPLY_CLIENT_LIST->length; i++){ACPLYClient *client = &ACPLY_CLIENT_LIST->items[i];
+
 int acply_initClients(ACPLY *item, size_t count){
-	ACPLYClientList *list = &item->client_list;
-	list->items = NULL;
-	list->length = 0;
-	list->items = (ACPLYClient *) malloc(sizeof (*list->items) * count);
-	if(list->items == NULL){
+	ACPLY_DEF_CLIENT_LIST
+	ACPLY_CLIENT_LIST->items = NULL;
+	ACPLY_CLIENT_LIST->length = 0;
+	ACPLY_CLIENT_LIST->items = (ACPLYClient *) malloc(sizeof (*ACPLY_CLIENT_LIST->items) * count);
+	if(ACPLY_CLIENT_LIST->items == NULL){
 		printdln("acply_initClients failed to allocate memory");
 		return 0;
 	}
-	list->length = count;
-	printd("acply clients array length = "); printdln(list->length);
-	for(size_t i=0; i<list->length; i++){
-		list->items[i].self = NULL;
+	ACPLY_CLIENT_LIST->length = count;
+	printd("acply clients array length = "); printdln(ACPLY_CLIENT_LIST->length);
+	ACPLY_FOREACH_CLIENT
+		client->self = NULL;
 	}
 	return 1;
 }
 
-int acply_addClient(ACPLY *item, void *client, int (*onRequestFunction) (void *, char *, int, int), void (*onResponseFunction)(void *, char *, int, int)){
-	ACPLYClientList *list = &item->client_list;
-	for(size_t i=0; i<list->length; i++){
-		ACPLYClient *client = &list->items[i];
+int acply_addClient(ACPLY *item, void *vclient, int (*onRequestFunction) (void *, char *, int, int), void (*onResponseFunction)(void *, char *, int, int)){
+	ACPLY_DEF_CLIENT_LIST
+	ACPLY_FOREACH_CLIENT
 		if(client->self == NULL){
-			client->self = client;
+			client->self = vclient;
 			client->onRequestFunction = onRequestFunction;
 			client->onResponseFunction = onResponseFunction;
 			return 1;
@@ -32,9 +35,8 @@ int acply_addClient(ACPLY *item, void *client, int (*onRequestFunction) (void *,
 }
 
 int acply_delClient(ACPLY *item, void *client){
-	ACPLYClientList *list = &item->client_list;
-	for(size_t i=0; i<list->length; i++){
-		ACPLYClient *client = &list->items[i];
+	ACPLY_DEF_CLIENT_LIST
+	ACPLY_FOREACH_CLIENT
 		if(client->self == client){
 			client->self = NULL;
 			return 1;
@@ -121,19 +123,18 @@ void acply_CONSIDER_REQUEST(ACPLY *item, HardwareSerial *serial) {
 			}
 			item->last_id = id;
 			int response_required = 0;
-			ACPLYClientList *list = &item->client_list;
-			for(size_t i=0; i<list->length; i++){
-				ACPLYClient *client = &list->items[i];
+			ACPLY_DEF_CLIENT_LIST
+			ACPLY_FOREACH_CLIENT
 				if(client->self != NULL){
 					response_required = response_required || client->onRequestFunction(client->self, acpl->buf, id, cmd);
 				}
 			}
 			if(!response_required){
-				printdln("acply: no channels need response to this request");
+				//printdln("acply: no channels need response to this request");
 				acply_reset(item); return;
 			}
 		}else{
-			printdln("acply: not request sign");
+			//printdln("acply: not request sign");
 			acply_reset(item); return;
 		}
 	}else{
@@ -175,9 +176,8 @@ void acply_CONSIDER_RESPONSE(ACPLY *item, HardwareSerial *serial) {
 	}else{
 		printdln("acply: bad response crc");
 	}
-	ACPLYClientList *list = &item->client_list;
-	for(size_t i=0; i <list->length; i++){
-		ACPLYClient *client = &list->items[i];
+	ACPLY_DEF_CLIENT_LIST
+	ACPLY_FOREACH_CLIENT
 		if(client->self != NULL){
 			client->onResponseFunction(client->self, acpl->buf, id, success);
 		}

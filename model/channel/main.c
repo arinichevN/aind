@@ -372,47 +372,49 @@ static int channel_parseNShowSpyRequestFloat(Channel *item, char *buf){
 }
 
 static int channel_onSpyRequest(void *vitem, char *buf, int id, int command){
-	printdln(buf);
+	printd("spy request: ");printdln(buf);
 	Channel *item = (Channel *) vitem;
 	item->need_spy_response = 0;
 	if(!(item->control == channel_SPY || item->control == channel_SPY_FAILED)){
+		printd("spy request: "); printd(item->id); printdln(" bad channel state");
 		return item->need_spy_response;
 	}
 	if(!item->enable){
+		printd("spy request: "); printd(item->id); printdln("not active");
 		return item->need_spy_response;
 	}
 	if(id != item->remote_id){
-		printd("channel "); printd(item->id); printd(": bad id = ");  printd(id); printdln(" in request"); 
+		printd("spy request: "); printd(item->id); printd(": bad id = ");  printd(id); printdln(" in request"); 
 		return item->need_spy_response;
 	}
 	if(command != item->acp_command){
-		printd("channel "); printd(item->id); printd(": bad command = ");  printd(command); printdln(" in request"); 
+		printd("spy request: "); printd(item->id); printd(": bad command = ");  printd(command); printdln(" in request"); 
 		return item->need_spy_response;
 	}
 	item->need_spy_response = item->parseNShowSpyRequestData(item, buf);
-	printd("channel "); printd(item->id); printdln(" wanted request detected");
+	printd("spy request: "); printd(item->id); printdln(" wanted request detected");
 	return item->need_spy_response;
 }
 
 static void channel_onSpyResponse(void *vitem, char *buf, int id, int success){
-	printdln(buf);
+	printd("spy response: "); printdln(buf);
 	Channel *item = (Channel *) vitem;
-	printd("channel "); printd(item->id); printd(" wanted response detected ");
+	printd("spy response: "); printd(item->id); printd(" wanted response detected ");
 	if(!(item->control == channel_SPY || item->control == channel_SPY_FAILED)){
 		return;
 	}
 	if(!success){
 		item->need_spy_response = 0;
 		channel_printError(item, CHANNEL_MSG_SPY_FAILED);
-		printdln("response: not success");
+		printdln("spy response: not success");
 		return;
 	}
 	if(!item->need_spy_response) {
-		//printd("channel "); printd(item->id); printdln(" unwanted response"); 
+		//printd("spy response "); printd(item->id); printdln(" unwanted response"); 
 		return;
 	}
 	if(id != item->remote_id){
-		printd("channel "); printd(item->id); printd(": bad id = ");  printd(id); printdln(" in response"); 
+		printd("spy response "); printd(item->id); printd(": bad id = ");  printd(id); printdln(" in response"); 
 		return;
 	}
 	item->parseNshowSpyData(item, buf);
@@ -470,8 +472,10 @@ static size_t channels_assignToSpySerial(ChannelLList *channels,  AppSerial *ser
 	size_t assigned_channels_count = 0;
 	FOREACH_CHANNEL(channels){
 		if(channel->mode == SERIAL_MODE_SPY && channel->serial_id == serial->id){
-			acply_addClient((ACPLY *) serial->controller, (void *) channel, channel_onSpyRequest, channel_onSpyResponse);
-			assigned_channels_count++;
+			if(acply_addClient((ACPLY *) serial->controller, (void *) channel, channel_onSpyRequest, channel_onSpyResponse)){
+				printd("add channel to spy: "); printdln(channel->id);
+				assigned_channels_count++;
+			}
 		}
 	}
 	return assigned_channels_count;
