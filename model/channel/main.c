@@ -2,17 +2,19 @@
 
 Channel channel_buf[CHANNEL_COUNT];
 
-static void channel_serverFailed(Channel *item);
+static void channel_SERVER_FAILED(Channel *item);
 
-static void channel_server(Channel *item);
+static void channel_SERVER(Channel *item);
 
-static void channel_spy(Channel *item);
+static void channel_SPY_FAILED(Channel *item);
 
-static void channel_clientWait(Channel *item);
+static void channel_SPY(Channel *item);
 
-static void channel_clientFTSGet(Channel *item);
+static void channel_CLIENT_WAIT(Channel *item);
 
-static void channel_clientStrGet(Channel *item);
+static void channel_CLIENT_FTS_GET(Channel *item);
+
+static void channel_CLIENT_STR_GET(Channel *item);
 
 static void channel_INIT(Channel *item);
 
@@ -41,6 +43,21 @@ static void channel_printStrBlink(Channel *item, const char *str);
 static void channel_printError(Channel *item, const char *str);
 
 static void channel_printFloat(Channel *item, double v);
+
+const char *channel_getStateStr(Channel *item){
+	if(item->control == channel_CLIENT_FTS_GET || item->control == channel_CLIENT_STR_GET || item->control == channel_CLIENT_WAIT || item->control == channel_SPY || item->control == channel_SERVER){ 
+		return "RUN";
+	} else if(item->control == channel_OFF) {
+		return "OFF";
+	} else if(item->control == channel_INIT) {
+		return "INIT";
+	}
+	return "FAILURE";
+}
+
+const char *channel_getErrorStr(Channel *item){
+	return getErrorStr(item->error_id);
+}
 
 static int channelParam_check(const ChannelParam *item){
 	if(!common_checkBlockStatus(item->enable)){
@@ -106,21 +123,6 @@ static int channelParam_check(const ChannelParam *item){
 		return ERROR_PARAM;
 	}
     return ERROR_NO;
-}
-
-const char *channel_getStateStr(Channel *item){
-	if(item->control == channel_clientFTSGet || item->control == channel_clientStrGet || item->control == channel_clientWait || item->control == channel_spy || item->control == channel_server){ 
-		return "RUN";
-	} else if(item->control == channel_OFF) {
-		return "OFF";
-	} else if(item->control == channel_INIT) {
-		return "INIT";
-	}
-	return "FAILURE";
-}
-
-const char *channel_getErrorStr(Channel *item){
-	return getErrorStr(item->error_id);
 }
 
 static int channel_setParam(Channel *item, const ChannelParam *param){
@@ -244,33 +246,38 @@ void channel_free(Channel *item){
 }
 
 int channel_start(Channel *item){
-	printd("starting channel ");printd(item->ind);printdln(":");
-	item->enable = YES;
-	item->control = channel_INIT;
-	CHANNEL_SAVE_FIELD(enable)
-	return 1;
+	if(item->control == channel_OFF || item->control == channel_FAILURE){
+		printd("starting channel ");printd(item->ind);printdln(":");
+		item->enable = YES;
+		CHANNEL_SAVE_FIELD(enable)
+		item->control = channel_INIT;
+		return 1;
+	}
+	return 0;
 }
 
 int channel_stop(Channel *item){
 	printd("stopping channel ");printdln(item->ind);
 	channel_clearStr(item);
+	item->error_id = ERROR_NO;
 	item->enable = NO;
-	item->control = channel_OFF;
 	CHANNEL_SAVE_FIELD(enable)
+	item->control = channel_OFF;
 	return 1;
 }
 
 int channel_disconnect(Channel *item){
 	printd("disconnecting channel ");printdln(item->ind);
 	channel_clearStr(item);
+	item->error_id = ERROR_NO;
 	item->control = channel_OFF;
 	return 1;
 }
 
-int channel_reload(Channel *item){
-	printd("reloading channel ");printd(item->ind); printdln(":");
+int channel_reset(Channel *item){
+	printd("restarting channel ");printd(item->ind); printdln(":");
 	channel_free(item);
-	channel_begin(item, item->ind, BUTTON_UP);
+	channel_begin(item, item->ind, digitalRead(DEFAULT_CONTROL_PIN));
 	return 1;
 }
 
@@ -359,7 +366,7 @@ static int channel_parseNShowSpyRequestFloat(Channel *item, char *buf){
 		channel_printError(item, CHANNEL_MSG_PARSE_FAILED);
 	}
 	ton_reset(&item->tmr);
-	item->control = channel_spy;
+	item->control = channel_SPY;
 	int need_spy_response = 0;
 	return need_spy_response;
 }
@@ -368,6 +375,9 @@ static int channel_onSpyRequest(void *vitem, char *buf, int id, int command){
 	printdln(buf);
 	Channel *item = (Channel *) vitem;
 	item->need_spy_response = 0;
+	if(!(item->control == channel_SPY || item->control == channel_SPY_FAILED)){
+		return item->need_spy_response;
+	}
 	if(!item->enable){
 		return item->need_spy_response;
 	}
@@ -388,7 +398,9 @@ static void channel_onSpyResponse(void *vitem, char *buf, int id, int success){
 	printdln(buf);
 	Channel *item = (Channel *) vitem;
 	printd("channel "); printd(item->id); printd(" wanted response detected ");
-	printd(buf);
+	if(!(item->control == channel_SPY || item->control == channel_SPY_FAILED)){
+		return;
+	}
 	if(!success){
 		item->need_spy_response = 0;
 		channel_printError(item, CHANNEL_MSG_SPY_FAILED);
@@ -405,7 +417,7 @@ static void channel_onSpyResponse(void *vitem, char *buf, int id, int success){
 	}
 	item->parseNshowSpyData(item, buf);
 	ton_reset(&item->tmr);
-	item->control = channel_spy;
+	item->control = channel_SPY;
 }
 
 
@@ -413,13 +425,13 @@ static void channel_setControlFunction(Channel *item){
 	item->control = NULL;
 	switch(item->mode){
 		case SERIAL_MODE_SERVER:
-			item->control = channel_server; item->control_next = channel_FAILURE; return;
+			item->control = channel_SERVER; item->control_next = channel_FAILURE; return;
 			break;
 		case SERIAL_MODE_CLIENT:
 			switch(item->acp_command){
-				case CMD_GETR_CHANNEL_FTS:		item->control = channel_clientFTSGet; item->control_next = channel_clientFTSGet; return;
-				case CMD_GETR_CHANNEL_STATE:	item->control = channel_clientStrGet; item->control_next = channel_clientStrGet; return;
-				case CMD_GETR_CHANNEL_ERROR:	item->control = channel_clientStrGet; item->control_next = channel_clientStrGet; return;
+				case CMD_GETR_CHANNEL_FTS:		item->control = channel_CLIENT_FTS_GET; item->control_next = channel_CLIENT_FTS_GET; return;
+				case CMD_GETR_CHANNEL_STATE:	item->control = channel_CLIENT_STR_GET; item->control_next = channel_CLIENT_STR_GET; return;
+				case CMD_GETR_CHANNEL_ERROR:	item->control = channel_CLIENT_STR_GET; item->control_next = channel_CLIENT_STR_GET; return;
 			}
 			break;
 		case SERIAL_MODE_SPY:
@@ -428,7 +440,7 @@ static void channel_setControlFunction(Channel *item){
 				case CMD_GETR_CHANNEL_STATE:
 				case CMD_GETR_CHANNEL_ERROR:
 				case CMD_SET_CHANNEL_GOAL:
-					item->control = channel_spy;  item->control_next = channel_FAILURE; return;
+					item->control = channel_SPY;  item->control_next = channel_FAILURE; return;
 			}
 			break;
 	}
@@ -458,7 +470,7 @@ static size_t channels_assignToSpySerial(ChannelLList *channels,  AppSerial *ser
 	size_t assigned_channels_count = 0;
 	FOREACH_CHANNEL(channels){
 		if(channel->mode == SERIAL_MODE_SPY && channel->serial_id == serial->id){
-			acply_addClient((ACPLY *) serial->controller, (void *) channel);
+			acply_addClient((ACPLY *) serial->controller, (void *) channel, channel_onSpyRequest, channel_onSpyResponse);
 			assigned_channels_count++;
 		}
 	}
@@ -474,7 +486,7 @@ int channels_coopSerials(ChannelLList *channels, AppSerial serials[]){
 			size_t sc = channels_countSpysForSerial(channels, serial->id);
 			printd("serial"); printd(serial->id); printd(" number of spy channels: "); printdln(sc);
 			if(sc > 0){
-				if(!acply_setParam((ACPLY *) serial->controller, sc, &channel_onSpyRequest, &channel_onSpyResponse)){
+				if(!acply_setParam((ACPLY *) serial->controller, sc)){
 					return 0;
 				}
 			}
@@ -503,45 +515,40 @@ int channels_coopSerials(ChannelLList *channels, AppSerial serials[]){
 	
 }
 
-static void channel_serverFailed(Channel *item){
+static void channel_SERVER_FAILED(Channel *item){
 	DISPLAY_CONTROLN(item->display);
 }
 
-static void channel_server(Channel *item){
+static void channel_SERVER(Channel *item){
 	if(ton(&item->tmr)){
 		channel_printError(item, CHANNEL_MSG_TIMEOUT);
-		item->control = channel_serverFailed;
+		item->control = channel_SERVER_FAILED;
 		//printd(item->id); printdln(" server: timeout"); 
 	}
 	DISPLAY_CONTROLN(item->display);
 }
 
-void channel_serverTouch(Channel *item){
-	ton_reset(&item->tmr);
-	item->control = channel_server;
-}
-
-static void channel_spyFailed(Channel *item){
+static void channel_SPY_FAILED(Channel *item){
 	DISPLAY_CONTROLN(item->display);
 }
 
-static void channel_spy(Channel *item){
+static void channel_SPY(Channel *item){
 	if(ton(&item->tmr)){
 		channel_printError(item, CHANNEL_MSG_TIMEOUT);
-		item->control = channel_spyFailed;
-		//printd(item->id); printdln(" spy: timeout"); 
+		item->control = channel_SPY_FAILED;
+		//printd(item->id); printdln(" spy: timeout");
 	}
 	DISPLAY_CONTROLN(item->display);
 }
 
-static void channel_clientWait(Channel *item){
+static void channel_CLIENT_WAIT(Channel *item){
 	if(ton(&item->tmr)){
 		item->control = item->control_next;
 	}
 	DISPLAY_CONTROLN(item->display);
 }
 
-static void channel_clientFTSGet(Channel *item){
+static void channel_CLIENT_FTS_GET(Channel *item){
 	FTS out;
 	int r = acplcm_getFTS(item->acplcm, item, item->acp_command, item->remote_id, &out);
 	switch(r){
@@ -558,19 +565,19 @@ static void channel_clientFTSGet(Channel *item){
 			}
 			printdln(" ");
 			ton_reset(&item->tmr);
-			item->control = channel_clientWait;
+			item->control = channel_CLIENT_WAIT;
 			break;
 		default://error
 			channel_printError(item, CHANNEL_MSG_CLIENT_FAILED);
 			ton_reset(&item->tmr);
-			item->control = channel_clientWait;
+			item->control = channel_CLIENT_WAIT;
 			printd(item->id); printd(" fts: failed: "); printd(acp_getStateStr(r)); printdln(" ");
 			break;
 	}
 	DISPLAY_CONTROLN(item->display);
 }
 
-static void channel_clientStrGet(Channel *item){
+static void channel_CLIENT_STR_GET(Channel *item){
 	char out[CHANNEL_DISPLAY_ROWS];
 	int r = acplcm_getIS(item->acplcm, item, item->acp_command, item->remote_id, out, CHANNEL_DISPLAY_ROWS);
 	switch(r){
@@ -580,13 +587,13 @@ static void channel_clientStrGet(Channel *item){
 		case ACP_DONE:
 			channel_printStr(item, out);
 			ton_reset(&item->tmr);
-			item->control = channel_clientWait;
+			item->control = channel_CLIENT_WAIT;
 			printd(item->id); printd(" str: "); printdln(out);printdln(" ");
 			break;
 		default://error
 			channel_printError(item, CHANNEL_MSG_CLIENT_FAILED);
 			ton_reset(&item->tmr);
-			item->control = channel_clientWait;
+			item->control = channel_CLIENT_WAIT;
 			printd(item->id); printd(" str: failed: "); printd(acp_getStateStr(r)); printdln(" ");
 			break;
 	}
@@ -596,15 +603,15 @@ static void channel_clientStrGet(Channel *item){
 static void channel_INIT(Channel *item){
 	if(item->error_id != ERROR_NO){
 		printd("channel_INIT "); printd(item->id); printdln(" error");
-        item->control = channel_FAILURE;
-        return;
-    }
-    channel_setControlFunction(item);
-    if(item->control == NULL){
+		item->control = channel_FAILURE;
+		return;
+	}
+	channel_setControlFunction(item);
+	if(item->control == NULL){
 		printd("channel_INIT "); printd(item->id); printdln(" control function error");
-        item->control = channel_FAILURE;
-        return;
-    }
+		item->control = channel_FAILURE;
+		return;
+	}
 	if(item->enable != YES){
 		item->control = channel_OFF;
 		return;
@@ -620,6 +627,24 @@ static void channel_OFF(Channel *item){
 
 static void channel_FAILURE(Channel *item){
 	;
+}
+
+#define CHANNEL_SERVER_PRINT_CONDITION item->mode == SERIAL_MODE_SERVER && (item->control == channel_SERVER || item->control == channel_SERVER_FAILED)
+
+void channel_serverPrint(Channel *item, const char *str){
+	if(CHANNEL_SERVER_PRINT_CONDITION){
+		ton_reset(&item->tmr);
+		channel_printStr(item, str);
+		item->control = channel_SERVER;
+	}
+}
+
+void channel_serverPrintBlink(Channel *item, const char *str){
+	if(CHANNEL_SERVER_PRINT_CONDITION){
+		ton_reset(&item->tmr);
+		channel_printStrBlink(item, str);
+		item->control = channel_SERVER;
+	}
 }
 
 int CHANNEL_FUN_GET(enable)(Channel *item){return item->enable;}

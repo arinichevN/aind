@@ -324,8 +324,7 @@ void acnf_setText(ACPLS *item, HardwareSerial *serial){
 	if(channel == NULL) {ACPLS_RESET return;}
 	char v[CHANNEL_DISPLAY_ROWS];
 	if(acp_packGetCellS(item->acpl->buf, ACP_REQUEST_IND_PARAM1, v, CHANNEL_DISPLAY_ROWS)){
-		channel_serverTouch(channel);
-		channel_printStr(channel, v);
+		channel_serverPrint(channel, v);
 	}
 	ACPLS_RESET
 }
@@ -335,8 +334,7 @@ void acnf_setTextBlink(ACPLS *item, HardwareSerial *serial){
 	if(channel == NULL) {ACPLS_RESET return;}
 	char v[CHANNEL_DISPLAY_ROWS];
 	if(acp_packGetCellS(item->acpl->buf, ACP_REQUEST_IND_PARAM1, v, CHANNEL_DISPLAY_ROWS)){
-		channel_serverTouch(channel);
-		channel_printStrBlink(channel, v);
+		channel_serverPrintBlink(channel, v);
 	}
 	ACPLS_RESET
 }
@@ -357,10 +355,10 @@ void acnf_stop(ACPLS *item, HardwareSerial *serial){
 	ACPLS_RESET
 }
 
-void acnf_reload(ACPLS *item, HardwareSerial *serial){
+void acnf_reset(ACPLS *item, HardwareSerial *serial){
 	Channel *channel = srvc_getChannel(item);
 	if(channel!=NULL){
-		channel_reload(channel);
+		channel_reset(channel);
 	}
 	ACPLS_RESET
 }
@@ -604,7 +602,7 @@ ACPLSCommandNode acnodes[] = {
 	
 	{CMD_CHANNEL_START,							&acnf_start},
 	{CMD_CHANNEL_STOP,							&acnf_stop},
-	{CMD_CHANNEL_RELOAD,						&acnf_reload},
+	{CMD_CHANNEL_RESET,							&acnf_reset},
 
 #ifdef SS_SET
 	{CMD_SET_INDICATOR_DISPLAY_KIND,			&SC_FUN_SET(display_kind)},

@@ -3,6 +3,13 @@
 extern ChannelLList channels;
 extern AppSerial serials[];
 
+void app_OFF(App *item);
+void app_FAILURE(App *item);
+void app_RESET(App *item);
+void app_RESET_WAIT_CHANNELS(App *item);
+void app_RESET_FREE(App *item);
+void app_RUN(App *item);
+void app_INIT(App *item);
 void app_begin(App *item);
 
 void app_INIT(App *item){
@@ -17,7 +24,7 @@ void app_FAILURE(App *item){
 	;
 }
 
-void app_FREE(App *item){
+void app_RESET_FREE(App *item){
 	FOREACH_CHANNEL(&channels){
 		channel_free(channel);
 	}
@@ -28,13 +35,13 @@ void app_FREE(App *item){
 	item->control = app_INIT;
 }
 
-void app_WAIT_CHANNELS(App *item){
+void app_RESET_WAIT_CHANNELS(App *item){
 	FOREACH_CHANNEL(&channels){
 		CONTROL(channel);
 	}
 	appSerials_control(serials);
 	if(!channels_activeExists(&channels)){
-		item->control = app_FREE;
+		item->control = app_RESET_FREE;
 	}
 }
 
@@ -42,8 +49,9 @@ void app_RESET(App *item){
 	FOREACH_CHANNEL(&channels){
 		channel_disconnect(channel);
 	}
-	item->control = app_WAIT_CHANNELS;
+	item->control = app_RESET_WAIT_CHANNELS;
 }
+
 
 void app_RUN(App *item){
 	FOREACH_CHANNEL(&channels){
@@ -70,9 +78,13 @@ const char *app_getErrorStr(App *item){
 } 
 
 const char *app_getStateStr(App *item){
-	if(item->control == app_RUN) return "RUN";
-	else if(item->control == app_FAILURE) return "FAILURE";
-	else if(item->control == app_OFF) return "OFF";
+	if(item->control == app_RUN)						return "RUN";
+	else if(item->control == app_FAILURE)				return "FAILURE";
+	else if(item->control == app_OFF)					return "OFF";
+	else if(item->control == app_RESET)					return "RESET";
+	else if(item->control == app_RESET_FREE)			return "RESET";
+	else if(item->control == app_RESET_WAIT_CHANNELS)	return "RESET";
+	else if(item->control == app_INIT)					return "INIT";
 	return "?";
 }
 

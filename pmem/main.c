@@ -47,7 +47,7 @@ int pmem_checkSize(size_t channel_count){
 	return 1;
 }
 
-int pmem_checkAppConfigCrc(AppConfig *item){
+int pmem_checkAppConfigCrc(const AppConfig *item){
 	uint8_t crc1 = EEPROM[0];
 	uint8_t crc2 = pmem_calcAppConfigCrc(item);
 	if(crc1 != crc2){
@@ -56,7 +56,7 @@ int pmem_checkAppConfigCrc(AppConfig *item){
 	return 1;
 }
 
-int pmem_checkChannelCrc(ChannelParam *item, int ind){
+int pmem_checkChannelCrc(const ChannelParam *item, int ind){
 	uint8_t crc1 = EEPROM[PMEM_CHANNEL_CRC_ADDR(ind)];
 	printd("   channel get crc: ");printdln(crc1);
 	uint8_t crc2 = pmem_calcChannelCrc(item);
@@ -152,6 +152,7 @@ int pmem_saveAppConfig(const AppConfig *item){
 	pmem_setAppConfigCrc(item);
 	return 1;
 }
+
 PMEMCHANNEL_DEF_SET_FIELD_FUNC(id, int)
 PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_kind, int)
 PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_p1, int)
