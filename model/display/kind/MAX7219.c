@@ -9,16 +9,17 @@ static void max7219_write(MAX7219 *item, volatile uint8_t reg, volatile uint8_t 
 
 void max7219_clear(void *device) {
 	MAX7219 *item = (MAX7219 *) device;
-    for(int i = MAX7219_REG_FIRST_DIGIT; i < MAX7219_REG_FIRST_DIGIT + MAX7219_SIGNS_COUNT; i++) {
-        max7219_write(item, i, 0x00);
-    }
+	for(int i = MAX7219_REG_FIRST_DIGIT; i < MAX7219_REG_FIRST_DIGIT + MAX7219_SIGNS_COUNT; i++) {
+		max7219_write(item, i, 0x00);
+	}
 }
 
 void max7219_setBrightness (MAX7219 *item, uint8_t brightness){
 	max7219_write(item, MAX7219_REG_INTENSITY, brightness & 0x0f);
 }
 
-static void max7219_setSigns(MAX7219 *item, uint8_t signs[]){
+static void max7219_setSigns(void *device, const uint8_t *signs){
+	MAX7219 *item = (MAX7219 *) device;
 	for (uint8_t i = 0; i < MAX7219_SIGNS_COUNT; i++){
 		max7219_write(item, MAX7219_REG_FIRST_DIGIT + i, signs[i]); //printd(signs[i]); printd(" ");
 	}
@@ -42,10 +43,10 @@ static size_t max7219_buildBufOfStr(uint8_t buf[], size_t blen, const char *str)
 	return j;
 }
 
-int max7219_needUpdate(MAX7219 *item, const char *str, int alignment){
+int max7219_needUpdate(MAX7219 *item, const char *str, int alignment, int mode){
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen = max7219_buildBufOfStr(buf, DISPLAY_BUF_LEN, str);
-	if(alignment != item->alignment || memcmp(buf, item->buf, sizeof buf) != 0){
+	if(alignment != item->alignment || mode != item->mode || memcmp(buf, item->buf, sizeof buf) != 0){
 		memcpy(item->buf, buf, sizeof buf);
 		item->blen = blen;
 		return 1;
@@ -53,9 +54,7 @@ int max7219_needUpdate(MAX7219 *item, const char *str, int alignment){
 	return 0; 
 }
 
-static void max7219_IDLE(void *device);
-static void max7219_SCROLL_START(void *device);
-static void max7219_SCROLL(void *device);
+static void max7219_RUN(void *device);
 
 static void max7219_printStrFit(MAX7219 *item, const char *str, int alignment){
 	uint8_t *signs = item->signs;
@@ -79,19 +78,20 @@ static void max7219_printStrFit(MAX7219 *item, const char *str, int alignment){
 		j++;
 
 	}
-	max7219_setSigns(item, signs);
-	item->control = max7219_IDLE;
+	max7219_setSigns((void *)item, signs);
+	scroll_stop(&item->scroll);
 }
 
 static void max7219_printStrScroll(MAX7219 *item, const char *str){
-	item->control = max7219_SCROLL_START;
+	scroll_start(&item->scroll, item->blen);
 }
 
 void max7219_printStr(void *device, const char *str, int alignment){
 	MAX7219 *item = (MAX7219 *) device;
-	if(max7219_needUpdate(item, str, alignment)){
+	if(max7219_needUpdate(item, str, alignment, DISPLAY_MODE_LIGHT)){
 		blink_stop(&item->blink);
 		item->alignment = alignment;
+		item->mode = DISPLAY_MODE_LIGHT;
 		size_t slen = strlen(str);
 		if (slen <= MAX7219_SIGNS_COUNT) {
 			max7219_printStrFit(item, str, alignment);
@@ -104,8 +104,9 @@ void max7219_printStr(void *device, const char *str, int alignment){
 void max7219_printBlinkStr(void *device, const char *str, int alignment){
 	MAX7219 *item = (MAX7219 *) device;
 	size_t slen = strlen(str);
-	if(max7219_needUpdate(item, str, alignment)){
+	if(max7219_needUpdate(item, str, alignment, DISPLAY_MODE_BLINK)){
 		item->alignment = alignment;
+		item->mode = DISPLAY_MODE_BLINK;
 		if (slen <= MAX7219_SIGNS_COUNT) {
 			max7219_printStrFit(item, str, alignment);
 		} else {
@@ -115,41 +116,10 @@ void max7219_printBlinkStr(void *device, const char *str, int alignment){
 	}
 }
 
-static void max7219_IDLE(void *device){
+static void max7219_RUN(void *device){
 	MAX7219 *item = (MAX7219 *)device;
-	Blink *blink = &item->blink;
-	CONTROL(blink);
-}
-
-static void max7219_SCROLL(void *device){
-	MAX7219 *item = (MAX7219 *)device;
-	if(tonr(&item->tmr)){
-		if(item->i >= item->blen + MAX7219_SIGNS_COUNT){
-			item->control = max7219_SCROLL_START;
-			return;
-		}
-		uint8_t *signs = item->signs;
-		for (size_t j = MAX7219_SIGNS_COUNT - 1; j > 0 ; j--) {
-			signs[j] = signs[j-1];
-		}
-		uint8_t c = 0;
-		if(item->i < item->blen){
-			c = item->buf[item->blen - 1 - item->i];
-		}
-		signs[0] = c;
-		max7219_setSigns(item, signs);
-		item->i++;
-	}
-	Blink *blink = &item->blink;
-	CONTROL(blink);
-}
-
-static void max7219_SCROLL_START(void *device){
-	MAX7219 *item = (MAX7219 *)device;
-	memset(item->signs, 0, sizeof (*item->signs) * MAX7219_SIGNS_COUNT);
-	ton_expire(&item->tmr);
-	item->i = 0;
-	item->control = max7219_SCROLL;
+	CONTROL(&item->blink);
+	CONTROL(&item->scroll);
 }
 
 static void max7219_blinkLow (void *device){
@@ -158,7 +128,7 @@ static void max7219_blinkLow (void *device){
 
 static void max7219_blinkHigh (void *device){
 	MAX7219 *item = (MAX7219 *) device;
-	max7219_setSigns(item, item->signs);
+	max7219_setSigns(device, item->signs);
 }
 
 void max7219_control(void *device){
@@ -188,9 +158,9 @@ void max7219_begin(MAX7219 *item, int din, int clk, int cs){
 	max7219_write(item, MAX7219_REG_DISPLAY_TEST, MAX7219_DISPLAY_TEST_STOP);
 	max7219_clear((void *) item);
 	max7219_setBrightness(item, MAX7219_BRIGHTNESS);
-	ton_setInterval(&item->tmr, DISPLAY_SCROLL_INTERVAL_MS);
-	ton_reset(&item->tmr);
 	blink_begin(&item->blink, item, max7219_blinkHigh, max7219_blinkLow);
+	scroll_begin(&item->scroll, SCROLL_KIND_MAX_FIRST, item, max7219_setSigns, item->signs, MAX7219_SIGNS_COUNT, item->buf);
 	item->alignment = DISPLAY_ALIGNMENT_LEFT + DISPLAY_ALIGNMENT_RIGHT;
-	item->control = max7219_IDLE;
+	item->mode = DISPLAY_MODE_LIGHT + DISPLAY_MODE_BLINK;
+	item->control = max7219_RUN;
 }

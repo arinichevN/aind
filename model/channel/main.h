@@ -24,9 +24,9 @@
 #define CHANNEL_MSG_CLIENT_FAILED		"EC"
 #define CHANNEL_MSG_NOPARSENSHOW		"EPS"
 
-
 #define CHANNEL_FLOAT_PRECISION_MAX		6
 
+typedef struct channel_st Channel;
 struct channel_st {
 	int id;
 	int enable;
@@ -40,21 +40,20 @@ struct channel_st {
 	int serial_id;
 	int float_precision;
 	
-	void (*control)(struct channel_st *);
+	void (*control)(Channel *);
 	
 	int device_kind;
 	int need_spy_response;
 	ACPLCM *acplcm;
 	Display display;
-	void (*parseNshowSpyData)(struct channel_st *, char *buf);
-	int (*parseNShowSpyRequestData)(struct channel_st *, char *buf);
-	void (*control_next)(struct channel_st *);
+	void (*parseNshowSpyData)(Channel *, char *buf);
+	int (*parseNShowSpyRequestData)(Channel *, char *buf);
+	void (*control_next)(Channel *);
 	int error_id;
 	Ton tmr;
 	size_t ind;
-	struct channel_st *next;
+	Channel *next;
 };
-typedef struct channel_st Channel;
 
 DEC_LIST(Channel)
 DEC_LLIST(Channel)

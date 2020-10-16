@@ -34,7 +34,7 @@ static void appConfig_setDefault(AppConfig *item){
 	sid = SERIAL_ID1;
 	
 	//-user_config:
-	APP_SET_DEFAULT_SERIAL_CONFIG_SPY
+	APP_SET_DEFAULT_SERIAL_CONFIG_SERVER
 	
 #endif
 #ifdef USE_SERIAL2

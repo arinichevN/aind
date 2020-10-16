@@ -4,9 +4,9 @@
 #include "common.h"
 #include "../../util/common.h"
 
-#include "dserial.h"
-#include "MAX7219.h"
-#include "TM1637.h"
+#include "kind/dserial.h"
+#include "kind/MAX7219.h"
+#include "kind/TM1637.h"
 
 typedef struct {
 	void *device;

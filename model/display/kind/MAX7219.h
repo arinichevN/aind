@@ -6,9 +6,10 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
-#include "../../util/ton.h"
-#include "common.h"
-#include "blink.h"
+#include "../../../util/ton.h"
+#include "../common.h"
+#include "../blink.h"
+#include "../scroll.h"
 
 #define MAX7219_SIGNS_COUNT			8
 
@@ -33,13 +34,15 @@ typedef struct max7219_st{
 	int clk;
 	int cs;
 	int alignment;
+	int mode;
 	uint8_t brightness;
 	uint8_t signs[MAX7219_SIGNS_COUNT];
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen;
-	size_t i;
-	Ton tmr;
+	//size_t i;
+	//Ton tmr;
 	Blink blink;
+	Scroll scroll;
 	void (*control) (void *);
 } MAX7219;
 

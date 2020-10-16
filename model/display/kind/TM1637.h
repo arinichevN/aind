@@ -6,9 +6,10 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
-#include "../../util/ton.h"
-#include "common.h"
-#include "blink.h"
+#include "../../../util/ton.h"
+#include "../common.h"
+#include "../blink.h"
+#include "../scroll.h"
 
 #define TM1637_MOD_POS			0
 #define TM1637_SIGNS_COUNT		4
@@ -25,13 +26,15 @@ typedef struct tm1637_st{
 	int dio;
 	int clk;
 	int alignment;
+	int mode;
 	uint8_t brightness;
 	uint8_t signs[TM1637_SIGNS_COUNT];
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen;
-	size_t i;
-	Ton tmr;
+	//size_t i;
+	//Ton tmr;
 	Blink blink;
+	Scroll scroll;
 	void (*control) (void *);
 } TM1637;
 

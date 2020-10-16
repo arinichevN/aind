@@ -6,7 +6,7 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
-#include "common.h"
+#include "../common.h"
 
 extern void dserial_clear(void *device);
 

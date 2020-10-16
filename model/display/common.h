@@ -5,7 +5,6 @@
 #include <inttypes.h>
 
 #define DISPLAY_BUF_LEN					16
-#define DISPLAY_SCROLL_INTERVAL_MS		300
 
 #define DISPLAY_FIRST_CHAR		' '
 #define DISPLAY_LAST_CHAR		'z'
@@ -13,6 +12,11 @@
 enum {
 	DISPLAY_ALIGNMENT_LEFT = 1,
 	DISPLAY_ALIGNMENT_RIGHT
+};
+
+enum {
+	DISPLAY_MODE_LIGHT = 1,
+	DISPLAY_MODE_BLINK
 };
 
 extern uint8_t encodeASCII(uint8_t chr);

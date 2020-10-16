@@ -1,8 +1,6 @@
 #include "TM1637.h"
 
-static void tm1637_IDLE(void *device);
-static void tm1637_SCROLL_START(void *device);
-static void tm1637_SCROLL(void *device);
+static void tm1637_RUN(void *device);
 
 void tm1637_setBrightness(TM1637 *item, uint8_t brightness) {
 	item->brightness = (brightness & 0x07) | 0x08;
@@ -62,7 +60,8 @@ static int tm1637_write(TM1637 *item, uint8_t v){
 	return ack;
 }
 
-void tm1637_setSigns(TM1637 *item, const uint8_t signs[]){
+void tm1637_setSigns(void *device, const uint8_t *signs){
+	TM1637 *item = (TM1637 *) device;
 	tm1637_start(item);
 	tm1637_write(item, TM1637_I2C_COMM1);
 	tm1637_stop(item);
@@ -94,10 +93,10 @@ static size_t tm1637_buildBufOfStr(uint8_t buf[], size_t blen, const char *str){
 	return i;
 }
 
-int tm1637_needUpdate(TM1637 *item, const char *str, int alignment){
+int tm1637_needUpdate(TM1637 *item, const char *str, int alignment, int mode){
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen = tm1637_buildBufOfStr(buf, DISPLAY_BUF_LEN, str);
-	if(alignment != item->alignment || memcmp(buf, item->buf, sizeof buf) != 0){
+	if(alignment != item->alignment || mode != item->mode || memcmp(buf, item->buf, sizeof buf) != 0){
 		memcpy(item->buf, buf, sizeof buf);
 		item->blen = blen;
 		return 1;
@@ -126,19 +125,20 @@ static void tm1637_printStrFit(TM1637 *item, const char *str){
 		//signs[ind] = encodeASCII(str[i]);
 		signs[ind] = item->buf[i];
 	}
-	tm1637_setSigns(item, signs);
-	item->control = tm1637_IDLE;
+	tm1637_setSigns((void *) item, signs);
+	scroll_stop(&item->scroll);
 }
 
 static void tm1637_printStrScroll(TM1637 *item, const char *str){
-	item->control = tm1637_SCROLL_START;
+	scroll_start(&item->scroll, item->blen);
 }
 
 void tm1637_printStr(void *device, const char *str, int alignment){
 	TM1637 *item = (TM1637 *) device;
-	if(tm1637_needUpdate(item, str, alignment)){
+	if(tm1637_needUpdate(item, str, alignment, DISPLAY_MODE_LIGHT)){
 		blink_stop(&item->blink);
 		item->alignment = alignment;
+		item->mode = DISPLAY_MODE_LIGHT;
 		size_t slen = strlen(str);
 		if (slen <= TM1637_SIGNS_COUNT) {
 			tm1637_printStrFit(item, str);
@@ -150,8 +150,9 @@ void tm1637_printStr(void *device, const char *str, int alignment){
 
 void tm1637_printBlinkStr(void *device, const char *str, int alignment){
 	TM1637 *item = (TM1637 *) device;
-	if(tm1637_needUpdate(item, str, alignment)){
+	if(tm1637_needUpdate(item, str, alignment, DISPLAY_MODE_BLINK)){
 		item->alignment = alignment;
+		item->mode = DISPLAY_MODE_BLINK;
 		size_t slen = strlen(str);
 		if (slen <= TM1637_SIGNS_COUNT) {
 			tm1637_printStrFit(item, str);
@@ -180,40 +181,10 @@ void tm1637_clear(void *device){
 }
 
 
-static void tm1637_IDLE(void *device){
+static void tm1637_RUN(void *device){
 	TM1637 *item = (TM1637 *) device;
-	Blink *blink = &item->blink;
-	CONTROL(blink);
-}
-
-static void tm1637_SCROLL(void *device){
-	TM1637 *item = (TM1637 *) device;
-	if(tonr(&item->tmr)){
-		if(item->i >= item->blen + TM1637_SIGNS_COUNT){
-			item->control = tm1637_SCROLL_START;
-			return;
-		}
-		for (size_t j = 0; j < TM1637_SIGNS_COUNT - 1; j++) {
-			item->signs[j] = item->signs[j + 1];
-		}
-		uint8_t c = 0;
-		if(item->i < item->blen){
-			c = item->buf[item->i];
-		}
-		item->signs[TM1637_SIGNS_COUNT - 1] = c;
-		tm1637_setSigns(item, item->signs);
-		item->i++;
-	}
-	Blink *blink = &item->blink;
-	CONTROL(blink);
-}
-
-static void tm1637_SCROLL_START(void *device){
-	TM1637 *item = (TM1637 *) device;
-	memset(item->signs, 0, sizeof (*item->signs) * TM1637_SIGNS_COUNT);
-	ton_expire(&item->tmr);
-	item->i = 0;
-	item->control = tm1637_SCROLL;
+	CONTROL(&item->blink);
+	CONTROL(&item->scroll);
 }
 
 static void tm1637_blinkLow (void *device){
@@ -222,7 +193,7 @@ static void tm1637_blinkLow (void *device){
 
 static void tm1637_blinkHigh (void *device){
 	TM1637 *item = (TM1637 *) device;
-	tm1637_setSigns(item, item->signs);
+	tm1637_setSigns(device, item->signs);
 }
 
 void tm1637_control(void *device){
@@ -246,9 +217,9 @@ void tm1637_begin(TM1637 *item, int dio, int clk){
 	digitalWrite(item->clk, LOW);
 	digitalWrite(item->dio, LOW);
 	tm1637_setBrightness(item, TM1637_BRIGHTNESS);
-	ton_setInterval(&item->tmr, DISPLAY_SCROLL_INTERVAL_MS);
-	ton_reset(&item->tmr);
 	blink_begin(&item->blink, item, tm1637_blinkHigh, tm1637_blinkLow);
+	scroll_begin(&item->scroll, SCROLL_KIND_MIN_FIRST, item, tm1637_setSigns, item->signs, TM1637_SIGNS_COUNT, item->buf);
 	item->alignment = DISPLAY_ALIGNMENT_LEFT + DISPLAY_ALIGNMENT_RIGHT;
-	item->control = tm1637_IDLE;
+	item->mode = DISPLAY_MODE_LIGHT + DISPLAY_MODE_BLINK;
+	item->control = tm1637_RUN;
 }
