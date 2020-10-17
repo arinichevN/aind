@@ -7,7 +7,7 @@
 #include <Arduino.h>
 
 #include "../../interface/i7Segment.h"
-#include "../../interface/iScroll.h"
+#include "../../interface/iScrollSlave.h"
 
 #define MAX7219_SIGNS_COUNT			8
 
@@ -31,7 +31,7 @@ typedef struct max7219_st{
 	int clk;
 	int cs;
 	i7Segment im_7segment;
-	iScroll im_scroll;
+	iScrollSlave im_scroll;
 } MAX7219;
 
 extern MAX7219 *max7219_new();

@@ -11,6 +11,7 @@
 #include "../../scroll.h"
 #include "../../../interface/iDisplay.h"
 #include "../../interface/i7Segment.h"
+#include "../../interface/iScrollData.h"
 #include "MAX7219.h"
 #include "TM1637.h"
 
@@ -21,13 +22,14 @@ struct display7_st{
 	void (*setSigns)(Display7 *, const char *);
 	int alignment;
 	int mode;
-	uint8_t brightness;
+	//uint8_t brightness;
 	uint8_t *signs;
 	size_t signs_count;
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen;
 	iBlink im_blink;
 	Blink blink;
+	iScrollData im_scroll_data;
 	Scroll scroll;
 	void (*control) (void *);
 	iDisplay im_display;

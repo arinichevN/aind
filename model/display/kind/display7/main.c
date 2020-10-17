@@ -188,12 +188,23 @@ void display7_buildInterfaces(Display7 *item){
 	item->im_display.free = display7_free;
 	item->im_display.printStr = display7_printStr;
 	item->im_display.printBlinkStr = display7_printBlinkStr;
+	item->im_scroll_data.buf = item->buf;
+	item->im_scroll_data.signs = item->signs;
+	item->im_scroll_data.signs_count = item->signs_count;
+	
+}
+
+void display7_buildScrollInterface(Display7 *item){
+	item->im_scroll_data.buf = item->buf;
+	item->im_scroll_data.signs = item->signs;
+	item->im_scroll_data.signs_count = item->signs_count;
+	
 }
 
 int display7_begin(Display7 *item, int device_kind, int p1, int p2, int p3){
 	display7_buildInterfaces(item);
 	int scroll_kind = SCROLL_KIND_NONE;
-	iScroll *i_scroll = NULL;
+	iScrollSlave *i_scroll = NULL;
 	switch(device_kind){
 		case DEVICE_KIND_TM1637:{
 				TM1637 *device = tm1637_new();
@@ -228,8 +239,9 @@ int display7_begin(Display7 *item, int device_kind, int p1, int p2, int p3){
 		default: 
 			return 0;
 	}
+	display7_buildScrollInterface(item);
 	blink_begin(&item->blink, &item->im_blink);
-	scroll_begin(&item->scroll, scroll_kind, i_scroll, item->signs, item->signs_count, item->buf);
+	scroll_begin(&item->scroll, scroll_kind, i_scroll, &item->im_scroll_data);
 	item->alignment = DISPLAY_ALIGNMENT_LEFT + DISPLAY_ALIGNMENT_RIGHT;
 	item->mode = DISPLAY_MODE_LIGHT + DISPLAY_MODE_BLINK;
 	item->control = display7_RUN;
