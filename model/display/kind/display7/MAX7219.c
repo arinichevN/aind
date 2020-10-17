@@ -35,7 +35,16 @@ MAX7219 *max7219_new(){
 	return out;
 }
 
+void max7219_buildInterfaces(MAX7219 *item){
+	item->im_7segment.self = item;
+	item->im_7segment.clear = max7219_clear;
+	item->im_7segment.printSigns = max7219_printSigns;
+	item->im_scroll.self = item;
+	item->im_scroll.printSigns = max7219_printSigns;
+}
+
 void max7219_begin(MAX7219 *item, int din, int clk, int cs){
+	max7219_buildInterfaces(item);
 	item->din = din;
 	item->clk = clk;
 	item->cs = cs;

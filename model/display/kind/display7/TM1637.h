@@ -6,6 +6,9 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
+#include "../../interface/i7Segment.h"
+#include "../../interface/iScroll.h"
+
 #define TM1637_SIGNS_COUNT		4
 
 #define TM1637_MOD_POS			0
@@ -22,15 +25,13 @@ typedef struct tm1637_st{
 	int dio;
 	int clk;
 	uint8_t brightness;
+	i7Segment im_7segment;
+	iScroll im_scroll;
+	iBlink im_blink;
 } TM1637;
 
 extern TM1637 *tm1637_new();
 
 extern void tm1637_begin(TM1637 *item, int dio, int clk);
-
-extern void tm1637_clear(void *self);
-
-extern void tm1637_printSigns(void *self, const uint8_t *signs);
-
 
 #endif

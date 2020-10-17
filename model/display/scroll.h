@@ -2,6 +2,7 @@
 #define DISPLAY_SCROLL_H
 
 #include "../../util/ton.h"
+#include "interface/iScroll.h"
 
 #define DISPLAY_SCROLL_INTERVAL_MS		300
 
@@ -13,10 +14,9 @@ enum{
 
 typedef struct scroll_st Scroll;
 struct scroll_st{
-	void *slave;
+	iScroll *slave;
 	uint8_t *signs;
 	uint8_t *buf;
-	void (*slave_setSigns) (void *, const uint8_t *signs);
 	void (*scroll_func) (uint8_t *signs, size_t signs_count, uint8_t *buf, size_t blen, size_t i);
 	Ton tmr;
 	size_t blen;
@@ -29,6 +29,6 @@ extern void scroll_start(Scroll *item, size_t blen);
 
 extern void scroll_stop(Scroll *item);
 
-extern void scroll_begin(Scroll *item, int kind, void *slave, void(*setSigns)(void *, const uint8_t *), uint8_t *signs, size_t signs_count, uint8_t *buf);
+extern void scroll_begin(Scroll *item, int kind, iScroll *slave, uint8_t *signs, size_t signs_count, uint8_t *buf);
 	
 #endif

@@ -9,16 +9,16 @@
 #include "../../common.h"
 #include "../../blink.h"
 #include "../../scroll.h"
+#include "../../../interface/iDisplay.h"
+#include "../../interface/i7Segment.h"
 #include "MAX7219.h"
 #include "TM1637.h"
 
-typedef struct display7_st DISPLAY7;
+typedef struct display7_st Display7;
 struct display7_st{
-	void *device;
-	void (*device_printSigns)(void *, const uint8_t *);
-	void (*device_clear)(void *device);
+	i7Segment *device;
 	size_t (*buildBufOfStr)(uint8_t *, size_t, const char *);
-	void (*setSigns)(DISPLAY7 *item, const char *str);
+	void (*setSigns)(Display7 *, const char *);
 	int alignment;
 	int mode;
 	uint8_t brightness;
@@ -26,23 +26,15 @@ struct display7_st{
 	size_t signs_count;
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen;
+	iBlink im_blink;
 	Blink blink;
 	Scroll scroll;
 	void (*control) (void *);
+	iDisplay im_display;
 };
 
-extern DISPLAY7 *display7_new();
+extern Display7 *display7_new();
 
-extern void display7_free(void *self);
-
-extern int display7_begin(DISPLAY7 *item, int device_kind, int din, int clk, int cs);
-
-extern void display7_printStr(void *self, const char *str, int alignment);
-
-extern void display7_printBlinkStr(void *self, const char *str, int alignment);
-
-extern void display7_clear(void *self);
-
-extern void display7_control(void *self);
+extern int display7_begin(Display7 *item, int device_kind, int din, int clk, int cs);
 
 #endif

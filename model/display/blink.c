@@ -10,14 +10,14 @@ static void blink_IDLE(Blink *item){
 
 static void blink_LOW(Blink *item){
 	if(tonr(&item->tmr)){
-		item->slave_low(item->slave);
+		item->slave->low(item->slave->self);
 		item->control = blink_HIGH;
 	}
 }
 
 static void blink_HIGH(Blink *item){
 	if(tonr(&item->tmr)){
-		item->slave_high(item->slave);
+		item->slave->high(item->slave->self);
 		item->control = blink_LOW;
 	}
 }
@@ -29,13 +29,11 @@ void blink_start(Blink *item){
 
 void blink_stop(Blink *item){
 	item->control = blink_IDLE;
-	item->slave_high(item->slave);
+	item->slave->high(item->slave->self);
 }
 
-void blink_begin(Blink *item, void *slave, void (*slave_high)(void *), void (*slave_low)(void *)){
+void blink_begin(Blink *item, iBlink *slave){
 	item->slave = slave;
-	item->slave_high = slave_high;
-	item->slave_low = slave_low;
 	ton_setInterval(&item->tmr, BLINK_INTERVAL_MS);
 	ton_reset(&item->tmr);
 	item->control = blink_IDLE;

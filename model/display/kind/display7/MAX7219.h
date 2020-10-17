@@ -6,6 +6,9 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
+#include "../../interface/i7Segment.h"
+#include "../../interface/iScroll.h"
+
 #define MAX7219_SIGNS_COUNT			8
 
 #define MAX7219_REG_FIRST_DIGIT		0x01
@@ -14,7 +17,6 @@
 #define MAX7219_REG_SCAN_LIMIT		0x0b
 #define MAX7219_REG_SHUTDOWN		0x0c
 #define MAX7219_REG_DISPLAY_TEST	0x0f
-
 
 #define MAX7219_INTENSITY_MIN		0x00
 #define MAX7219_INTENSITY_MAX		0x0f
@@ -28,15 +30,12 @@ typedef struct max7219_st{
 	int din;
 	int clk;
 	int cs;
+	i7Segment im_7segment;
+	iScroll im_scroll;
 } MAX7219;
 
 extern MAX7219 *max7219_new();
 
 extern void max7219_begin(MAX7219 *item, int din, int clk, int cs);
-
-extern void max7219_clear(void *self);
-
-extern void max7219_printSigns(void *self, const uint8_t *signs);
-
 
 #endif

@@ -46,7 +46,7 @@ static void scroll_RUN(Scroll *item){
 			return;
 		}
 		item->scroll_func(item->signs, item->signs_count, item->buf, item->blen, item->i);
-		item->slave_setSigns(item->slave, item->signs);
+		item->slave->printSigns(item->slave->self, item->signs);
 		item->i++;
 	}
 }
@@ -60,7 +60,7 @@ void scroll_stop(Scroll *item){
 	item->control = scroll_IDLE;
 }
 
-void scroll_begin(Scroll *item, int kind, void *slave, void(*setSigns)(void *, const uint8_t *), uint8_t *signs, size_t signs_count, uint8_t *buf){
+void scroll_begin(Scroll *item, int kind, iScroll *slave, uint8_t *signs, size_t signs_count, uint8_t *buf){
 	switch(kind){
 		case SCROLL_KIND_MIN_FIRST: item->scroll_func = scroll_scrollMinFirst; break;
 		case SCROLL_KIND_MAX_FIRST: item->scroll_func = scroll_scrollMaxFirst; break;
@@ -69,7 +69,6 @@ void scroll_begin(Scroll *item, int kind, void *slave, void(*setSigns)(void *, c
 	ton_setInterval(&item->tmr, DISPLAY_SCROLL_INTERVAL_MS);
 	ton_reset(&item->tmr);
 	item->slave = slave;
-	item->slave_setSigns = setSigns;
 	item->signs = signs;
 	item->signs_count = signs_count;
 	item->buf = buf;

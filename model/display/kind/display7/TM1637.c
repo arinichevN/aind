@@ -106,7 +106,16 @@ TM1637 *tm1637_new(){
 	return out;
 }
 
+void tm1637_buildInterfaces(TM1637 *item){
+	item->im_7segment.self = item;
+	item->im_7segment.clear = tm1637_clear;
+	item->im_7segment.printSigns = tm1637_printSigns;
+	item->im_scroll.self = item;
+	item->im_scroll.printSigns = tm1637_printSigns;
+}
+
 void tm1637_begin(TM1637 *item, int dio, int clk){
+	tm1637_buildInterfaces(item);
 	item->dio = dio;
 	item->clk = clk;
 	pinMode(item->clk, INPUT);

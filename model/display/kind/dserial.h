@@ -8,14 +8,12 @@
 
 #include "../common.h"
 
-extern void dserial_clear(void *self);
+#include "../../interface/iDisplay.h"
 
-extern void dserial_printStr(void *self, const char *str, int alignment);
+typedef struct {
+	iDisplay im_display;
+}DSerial;
 
-extern void dserial_printBlinkStr(void *self, const char *str, int alignment);
-
-extern void dserial_free(void *self);
-
-extern void dserial_control(void *self);
+extern int dserial_begin(DSerial *item);
 
 #endif
