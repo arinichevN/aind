@@ -6,11 +6,6 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
-#include "../../../util/ton.h"
-#include "../common.h"
-#include "../blink.h"
-#include "../scroll.h"
-
 #define MAX7219_SIGNS_COUNT			8
 
 #define MAX7219_REG_FIRST_DIGIT		0x01
@@ -33,31 +28,15 @@ typedef struct max7219_st{
 	int din;
 	int clk;
 	int cs;
-	int alignment;
-	int mode;
-	uint8_t brightness;
-	uint8_t signs[MAX7219_SIGNS_COUNT];
-	uint8_t buf[DISPLAY_BUF_LEN];
-	size_t blen;
-	//size_t i;
-	//Ton tmr;
-	Blink blink;
-	Scroll scroll;
-	void (*control) (void *);
 } MAX7219;
 
 extern MAX7219 *max7219_new();
 
 extern void max7219_begin(MAX7219 *item, int din, int clk, int cs);
 
-extern void max7219_printStr(void *device, const char *str, int alignment);
+extern void max7219_clear(void *self);
 
-extern void max7219_printBlinkStr(void *device, const char *str, int alignment);
+extern void max7219_printSigns(void *self, const uint8_t *signs);
 
-extern void max7219_clear(void *device);
-
-extern void max7219_setBrightness (MAX7219 *item, uint8_t brightness);
-
-extern void max7219_control(void *device);
 
 #endif

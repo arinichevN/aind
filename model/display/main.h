@@ -5,15 +5,15 @@
 #include "../../util/common.h"
 
 #include "kind/dserial.h"
-#include "kind/MAX7219.h"
-#include "kind/TM1637.h"
+#include "kind/display7/main.h"
 
 typedef struct {
-	void *device;
 	int kind;
 	int p1;
 	int p2;
 	int p3;
+	void *device;
+	void (*free) (void *);
 	void (*clear) (void *);
 	void (*printStr) (void *, const char *, int);
 	void (*printBlinkStr) (void *, const char *, int);
