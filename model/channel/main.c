@@ -44,6 +44,10 @@ static void channel_printError(Channel *item, const char *str);
 
 static void channel_printFloat(Channel *item, double v);
 
+static int channel_onSpyRequest(void *vitem, char *buf, int id, int command);
+
+static void channel_onSpyResponse(void *vitem, char *buf, int id, int success);
+
 const char *channel_getStateStr(Channel *item){
 	if(item->control == channel_CLIENT_FTS_GET || item->control == channel_CLIENT_STR_GET || item->control == channel_CLIENT_WAIT || item->control == channel_SPY || item->control == channel_SERVER){ 
 		return "RUN";
@@ -125,6 +129,12 @@ static int channelParam_check(const ChannelParam *item){
     return ERROR_NO;
 }
 
+static void channel_buildInterfaces(Channel *item){
+	item->im_spy_client.self = item;
+	item->im_spy_client.onRequestFunction = channel_onSpyRequest;
+	item->im_spy_client.onResponseFunction = channel_onSpyResponse;
+}
+
 static int channel_setParam(Channel *item, const ChannelParam *param){
 	int r = channelParam_check(param);
 	if(r != ERROR_NO){
@@ -201,6 +211,7 @@ static int channel_setParamAlt(Channel *item, size_t ind, int default_btn){
 
 void channel_begin(Channel *item, size_t ind, int default_btn){
 	printd("beginning channel ");printd(ind); printdln(":");
+	channel_buildInterfaces(item);
 	item->error_id = channel_setParamAlt(item, ind, default_btn);
 	item->control = channel_INIT;
 	printd("\tid: ");printdln(item->id);
@@ -472,7 +483,7 @@ static size_t channels_assignToSpySerial(ChannelLList *channels,  AppSerial *ser
 	size_t assigned_channels_count = 0;
 	FOREACH_CHANNEL(channels){
 		if(channel->mode == SERIAL_MODE_SPY && channel->serial_id == serial->id){
-			if(acply_addClient((ACPLY *) serial->controller, (void *) channel, channel_onSpyRequest, channel_onSpyResponse)){
+			if(acply_addClient((ACPLY *) serial->controller, &channel->im_spy_client)){
 				printd("add channel to spy: "); printdln(channel->id);
 				assigned_channels_count++;
 			}

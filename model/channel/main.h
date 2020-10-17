@@ -45,6 +45,7 @@ struct channel_st {
 	int device_kind;
 	int need_spy_response;
 	ACPLCM *acplcm;
+	iACPLYClient im_spy_client;
 	Display display;
 	void (*parseNshowSpyData)(Channel *, char *buf);
 	int (*parseNShowSpyRequestData)(Channel *, char *buf);

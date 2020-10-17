@@ -7,27 +7,25 @@ typedef struct acply_client_st{
 	void *self;
 	int (*onRequestFunction) (void *, char *, int, int);
 	void (*onResponseFunction)(void *, char *, int, int);
-} ACPLYClient;
+} iACPLYClient;
 
 typedef struct {
-	ACPLYClient *items;
+	iACPLYClient **items;
 	size_t length;
 }ACPLYClientList;
 
 typedef struct acply_st{
 	int last_id;
 	ACPLYClientList client_list;
-	int (*onRequestFunction) (void *, char *, int, int);
-	void (*onResponseFunction)(void *, char *, int, int);
 	ACPL *acpl;
 	void (*control) (struct acply_st *, HardwareSerial *);
 } ACPLY;
 
 extern int acply_initClients(ACPLY *item, size_t count);
 
-extern int acply_addClient(ACPLY *item, void *client, int (*onRequestFunction) (void *, char *, int, int), void (*onResponseFunction)(void *, char *, int, int));
+extern int acply_addClient(ACPLY *item, iACPLYClient *client);
 
-extern int acply_delClient(ACPLY *item, void *client);
+extern int acply_delClient(ACPLY *item, iACPLYClient *client);
 
 extern void acply_free(ACPLY *item);
 

@@ -2,13 +2,14 @@
 
 #define ACPLY_CLIENT_LIST client_list
 #define ACPLY_DEF_CLIENT_LIST ACPLYClientList *ACPLY_CLIENT_LIST = &item->client_list;
-#define ACPLY_FOREACH_CLIENT  for(size_t i=0; i<ACPLY_CLIENT_LIST->length; i++){ACPLYClient *client = &ACPLY_CLIENT_LIST->items[i];
+#define ACPLY_CLIENT ACPLY_CLIENT_LIST->items[i]
+#define ACPLY_FOREACH_CLIENT  for(size_t i=0; i<ACPLY_CLIENT_LIST->length; i++){
 
 int acply_initClients(ACPLY *item, size_t count){
 	ACPLY_DEF_CLIENT_LIST
 	ACPLY_CLIENT_LIST->items = NULL;
 	ACPLY_CLIENT_LIST->length = 0;
-	ACPLY_CLIENT_LIST->items = (ACPLYClient *) malloc(sizeof (*ACPLY_CLIENT_LIST->items) * count);
+	ACPLY_CLIENT_LIST->items = (iACPLYClient **) malloc(sizeof (*ACPLY_CLIENT_LIST->items) * count);
 	if(ACPLY_CLIENT_LIST->items == NULL){
 		printdln("acply_initClients failed to allocate memory");
 		return 0;
@@ -16,29 +17,27 @@ int acply_initClients(ACPLY *item, size_t count){
 	ACPLY_CLIENT_LIST->length = count;
 	printd("acply clients array length = "); printdln(ACPLY_CLIENT_LIST->length);
 	ACPLY_FOREACH_CLIENT
-		client->self = NULL;
+		ACPLY_CLIENT = NULL;
 	}
 	return 1;
 }
 
-int acply_addClient(ACPLY *item, void *vclient, int (*onRequestFunction) (void *, char *, int, int), void (*onResponseFunction)(void *, char *, int, int)){
+int acply_addClient(ACPLY *item, iACPLYClient *vclient){
 	ACPLY_DEF_CLIENT_LIST
 	ACPLY_FOREACH_CLIENT
-		if(client->self == NULL){
-			client->self = vclient;
-			client->onRequestFunction = onRequestFunction;
-			client->onResponseFunction = onResponseFunction;
+		if(ACPLY_CLIENT == NULL){
+			ACPLY_CLIENT = vclient;
 			return 1;
 		}
 	}
 	return 0;
 }
 
-int acply_delClient(ACPLY *item, void *client){
+int acply_delClient(ACPLY *item, iACPLYClient *client){
 	ACPLY_DEF_CLIENT_LIST
 	ACPLY_FOREACH_CLIENT
-		if(client->self == client){
-			client->self = NULL;
+		if(ACPLY_CLIENT == client){
+			ACPLY_CLIENT = NULL;
 			return 1;
 		}
 	}
@@ -68,6 +67,7 @@ ACPLY *acply_new(){
 	size_t sz = sizeof (ACPLY);
 	ACPLY *out = (ACPLY *) malloc(sz);
 	if(out == NULL){ printdln("acply_new: failed");}
+	memset(out, 0, sz);
 	printd("acply_new: "); printd(sz); printdln(" bytes allocated");
 	return out;
 }
@@ -125,8 +125,8 @@ void acply_CONSIDER_REQUEST(ACPLY *item, HardwareSerial *serial) {
 			int response_required = 0;
 			ACPLY_DEF_CLIENT_LIST
 			ACPLY_FOREACH_CLIENT
-				if(client->self != NULL){
-					response_required = response_required || client->onRequestFunction(client->self, acpl->buf, id, cmd);
+				if(ACPLY_CLIENT != NULL){
+					response_required = response_required || ACPLY_CLIENT->onRequestFunction(ACPLY_CLIENT->self, acpl->buf, id, cmd);
 				}
 			}
 			if(!response_required){
@@ -178,8 +178,8 @@ void acply_CONSIDER_RESPONSE(ACPLY *item, HardwareSerial *serial) {
 	}
 	ACPLY_DEF_CLIENT_LIST
 	ACPLY_FOREACH_CLIENT
-		if(client->self != NULL){
-			client->onResponseFunction(client->self, acpl->buf, id, success);
+		if(ACPLY_CLIENT != NULL){
+			ACPLY_CLIENT->onResponseFunction(ACPLY_CLIENT->self, acpl->buf, id, success);
 		}
 	}
 	acply_reset(item);

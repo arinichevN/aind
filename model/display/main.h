@@ -14,12 +14,6 @@ typedef struct {
 	int p1;
 	int p2;
 	int p3;
-	//void *device;
-	//void (*free) (void *);
-	//void (*clear) (void *);
-	//void (*printStr) (void *, const char *, int);
-	//void (*printBlinkStr) (void *, const char *, int);
-	//void (*control) (void *);
 } Display;
 
 extern int display_begin(Display *item, int device_kind, int p1, int p2, int p3);
