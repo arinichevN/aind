@@ -9,10 +9,8 @@ void setup(){
 	app_init(&app);
 }
 
-//#include "util/stopwatch.c"
+#include "util/stopwatch.c"
 
 void loop() {
-	//stw_start();
 	CONTROL_N(app);
-	//stw_stop();
 }
