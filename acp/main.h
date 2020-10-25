@@ -20,9 +20,6 @@
 
 #define ACP_CHECK_CRC				1
 
-#define ACP_PACK_TIMEOUT_MS			500UL
-#define ACP_BUSY_TIMEOUT_MS			300UL
-
 #define ACP_DELIMITER_START			'<'
 #define ACP_DELIMITER_COLUMN		';'
 #define ACP_DELIMITER_END			'>'

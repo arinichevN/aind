@@ -12,6 +12,9 @@
 
 #include "../main.h"
 
+#define ACP_PACK_TIMEOUT_MS			500UL
+#define ACP_BUSY_TIMEOUT_MS			30UL
+
 #define ACPL_RESET acpl_reset(item);
 #define ACPL_WBUF_PREP item->wi = 0UL; item->wbuf_size = strlen(item->buf) * sizeof (*item->buf);
 
