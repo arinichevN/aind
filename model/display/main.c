@@ -38,6 +38,17 @@ int display_begin(Display *item, int device_kind, int p1, int p2, int p3){
 				display_setParam(item, device_kind, &device->im_display);
 			}
 			return 1;
+		case DEVICE_KIND_DSLED:{
+				DSLed *device = dsled_new();
+				if(device == NULL){
+					return 0;
+				}
+				if(!dsled_begin(device, p1, p2, p3)){
+					return 0;
+				}
+				display_setParam(item, device_kind, &device->im_display);
+			}
+			return 1;
 	}
 	return 0;
 }

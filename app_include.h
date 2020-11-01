@@ -15,6 +15,7 @@
 #include "model/display/scroll.c"
 #include "model/display/common.c"
 #include "model/display/kind/dserial.c"
+#include "model/display/kind/dsled.c"
 #include "model/display/kind/display7/MAX7219.c"
 #include "model/display/kind/display7/TM1637.c"
 #include "model/display/kind/display7/main.c"

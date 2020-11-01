@@ -9,10 +9,10 @@
  * ChannelParam structure members:
  * id,
  * enable: YES or NO,
- * display_kind: DEVICE_KIND_MAX7219 or DEVICE_KIND_TM1637 or DEVICE_KIND_DSERIAL,
- * display_p1: DIN pin for display_kind=DEVICE_KIND_MAX7219; DIO pin for display_kind=DEVICE_KIND_TM1637,
- * display_p2: CLK pin for display_kind=DEVICE_KIND_MAX7219; CLK pin for display_kind=DEVICE_KIND_TM1637,
- * display_p3: CS pin for display_kind=DEVICE_KIND_MAX7219,
+ * display_kind: DEVICE_KIND_MAX7219 or DEVICE_KIND_TM1637 or DEVICE_KIND_DSERIAL or DEVICE_KIND_DSLED (usefull only for command=CMD_GETR_CHANNEL_STATE),
+ * display_p1: DIN pin for display_kind=DEVICE_KIND_MAX7219; DIO pin for display_kind=DEVICE_KIND_TM1637; run pin for display_kind=DEVICE_KIND_DSLED,
+ * display_p2: CLK pin for display_kind=DEVICE_KIND_MAX7219; CLK pin for display_kind=DEVICE_KIND_TM1637; stop pin for display_kind=DEVICE_KIND_DSLED,
+ * display_p3: CS pin for display_kind=DEVICE_KIND_MAX7219; failure pin for display_kind=DEVICE_KIND_DSLED,
  * display_text_alignment: DISPLAY_ALIGNMENT_LEFT or DISPLAY_ALIGNMENT_RIGHT,
  * serial_id: SERIAL_ID0 or SERIAL_ID1 or SERIAL_ID2 or SERIAL_ID3
  * mode: SERIAL_MODE_SPY or SERIAL_MODE_CLIENT or SERIAL_MODE_SERVER,

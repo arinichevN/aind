@@ -6,6 +6,7 @@
 
 #include "../interface/iDisplay.h"
 #include "kind/dserial.h"
+#include "kind/dsled.h"
 #include "kind/display7/main.h"
 
 typedef struct {
