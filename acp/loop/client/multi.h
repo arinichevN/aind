@@ -22,19 +22,19 @@
 #include "../../../util/caller_queue.h"
 #include "main.h"
 
-
-typedef struct acplcm_st{
-	ACPLC *acplc;
+typedef struct acplcm_st Acplcm;
+struct acplcm_st {
+	Acplc *acplc;
 	CallerQueue *queue;
-	void (*control) (struct acplcm_st *, HardwareSerial *);
-} ACPLCM;
+	void (*control) (Acplcm *, HardwareSerial *);
+};
 
-extern int acplcm_sendII(ACPLCM *item, void *caller, char sign, int cmd, int v);
-extern int acplcm_sendIIF(ACPLCM *item, void *caller, char sign, int cmd, int channel_id, double v);
-extern int acplcm_getFTS(ACPLCM *item, void *caller, int cmd, int channel_id, FTS *out);
-extern int acplcm_getIS(ACPLCM *item, void *caller, int cmd, int channel_id, char *out, size_t slen);
-extern int acplcm_begin(ACPLCM **item);
-extern void acplcm_free(ACPLCM *item);
-extern void acplcm_control(ACPLCM *item, HardwareSerial *serial);
+extern int acplcm_sendII(Acplcm *self, void *caller, char sign, int cmd, int v);
+extern int acplcm_sendIIF(Acplcm *self, void *caller, char sign, int cmd, int channel_id, double v);
+extern int acplcm_getFTS(Acplcm *self, void *caller, int cmd, int channel_id, FTS *out);
+extern int acplcm_getIS(Acplcm *self, void *caller, int cmd, int channel_id, char *out, size_t slen);
+extern int acplcm_begin(Acplcm **self);
+extern void acplcm_free(Acplcm *self);
+extern void acplcm_control(Acplcm *self, HardwareSerial *serial);
 
 #endif 

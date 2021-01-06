@@ -17,9 +17,9 @@ typedef struct {
 	int p3;
 } Display;
 
-extern int display_begin(Display *item, int device_kind, int p1, int p2, int p3);
+extern int display_begin(Display *self, int device_kind, int p1, int p2, int p3);
 
-extern void display_free(Display *item);
+extern void display_free(Display *self);
 
 #define DISPLAY_CONTROL(D) (D)->device->control((D)->device->self)
 

@@ -1,40 +1,45 @@
 #include "blink.h"
 
-static void blink_IDLE(Blink *item);
-static void blink_LOW(Blink *item);
-static void blink_HIGH(Blink *item);
+static void blink_IDLE(Blink *self);
+static void blink_LOW(Blink *self);
+static void blink_HIGH(Blink *self);
 
-static void blink_IDLE(Blink *item){
+static void blink_IDLE(Blink *self){
 	;
 }
 
-static void blink_LOW(Blink *item){
-	if(tonr(&item->tmr)){
-		item->slave->low(item->slave->self);
-		item->control = blink_HIGH;
+static void blink_LOW(Blink *self){
+	if(tonr(&self->tmr)){
+		self->slave->low(self->slave->self);
+		self->control = blink_HIGH;
 	}
 }
 
-static void blink_HIGH(Blink *item){
-	if(tonr(&item->tmr)){
-		item->slave->high(item->slave->self);
-		item->control = blink_LOW;
+static void blink_HIGH(Blink *self){
+	if(tonr(&self->tmr)){
+		self->slave->high(self->slave->self);
+		self->control = blink_LOW;
 	}
 }
 
-void blink_start(Blink *item){
-	ton_expire(&item->tmr);
-	item->control = blink_HIGH;	
+void blink_start(Blink *self){
+	ton_expire(&self->tmr);
+	self->control = blink_HIGH;	
 }
 
-void blink_stop(Blink *item){
-	item->control = blink_IDLE;
-	item->slave->high(item->slave->self);
+void blink_stopLow(Blink *self){
+	self->control = blink_IDLE;
+	self->slave->low(self->slave->self);
 }
 
-void blink_begin(Blink *item, iBlink *slave){
-	item->slave = slave;
-	ton_setInterval(&item->tmr, BLINK_INTERVAL_MS);
-	ton_reset(&item->tmr);
-	item->control = blink_IDLE;
+void blink_stopHigh(Blink *self){
+	self->control = blink_IDLE;
+	self->slave->high(self->slave->self);
+}
+
+void blink_begin(Blink *self, iBlink *slave){
+	self->slave = slave;
+	ton_setInterval(&self->tmr, BLINK_INTERVAL_MS);
+	ton_reset(&self->tmr);
+	self->control = blink_IDLE;
 }

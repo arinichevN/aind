@@ -21,25 +21,27 @@
 #include "model/display/kind/display7/main.c"
 #include "model/display/main.c"
 
-#include "model/channel/default.c"
 #include "model/channel/main.c"
+#include "model/channel/llist.c"
 
 #include "acp/main.c"
 #include "acp/loop/main.c"
 
 #include "acp/loop/client/main.c"
 #include "acp/loop/client/multi.c"
-#include "acp/loop/spy.c"
+#include "acp/loop/spy/main.c"
 
 #ifdef SERIAL_SERVER
 #include "app/server_config.c"
-#include "acp/loop/server.c"
+#include "acp/loop/server/main.c"
 #endif
 
 #include "app/error_indicator.c"
-#include "app/serial_config.c"
-#include "app/config.c"
+#include "app/serial_param.c"
+#include "app/param.c"
 #include "app/serial.c"
+#include "app/serials.c"
+#include "app/channels.c"
 #include "app/main.c"
 
 #endif 

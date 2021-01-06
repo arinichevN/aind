@@ -8,21 +8,11 @@
 
 #define LIST_ITEM_SIZE(list) sizeof (*(list)->items)
 
-#define DEC_PLIST(T) typedef struct {T **items; size_t length;size_t max_length;} T##PList;
 #define DEC_LIST(T) typedef struct {T *items; size_t length;size_t max_length;} T##List;
-#define NULL_LIST(list) memset((list)->items,0,LIST_ITEM_SIZE(list) * (list)->max_length );(list)->length=0;
-#define RESET_LIST(list) (list)->items=NULL; (list)->length=0; (list)->max_length=0;
-#define FREE_LIST(list) free((list)->items); RESET_LIST(list)
-#define RESIZE_M_LIST(list, new_length)  if((list)->max_length < new_length){(list)->items = realloc((list)->items, LIST_ITEM_SIZE(list) * new_length );if ((list)->items == NULL) {(list)->max_length=0;(list)->length=0;}else{(list)->max_length=new_length;}}
-#define LIST_PUSH(list, min_alloc_length, new_item) if((list)->max_length<(list)->length+1){if(min_alloc_length<1)return 0;(list)->items=realloc((list)->items, LIST_ITEM_SIZE(list) * ((list)->max_length+min_alloc_length));if((list)->items==NULL){(list)->max_length=0;(list)->length=0;return 0;}(list)->max_length+=min_alloc_length;}(list)->items[(list)->length]=*(new_item);(list)->length++;
-//call it for clear lists
-#define ALLOC_LIST(list, length) if(length>0){(list)->items = calloc(length, LIST_ITEM_SIZE(list));if ((list)->items != NULL)(list)->max_length=length;}
-
-
-
 #define LIST_RESET(list) (list)->items=NULL; (list)->length=0; (list)->max_length=0;
 #define LIST_FREE(list) free((list)->items); LIST_RESET(list)
-#define RESIZE_M_LIST(list, new_length)  if((list)->max_length < new_length){(list)->items = realloc((list)->items, LIST_ITEM_SIZE(list) * new_length );if ((list)->items == NULL) {(list)->max_length=0;(list)->length=0;}else{(list)->max_length=new_length;}}
+#define LIST_CLEAR(list) memset((list)->items,0,LIST_ITEM_SIZE(list) * (list)->max_length );(list)->length=0;
+#define LIST_RESIZE(list, new_length)  if((list)->max_length < new_length){(list)->items = realloc((list)->items, LIST_ITEM_SIZE(list) * new_length );if ((list)->items == NULL) {(list)->max_length=0;(list)->length=0;}else{(list)->max_length=new_length;}}
 #define LIST_PUSH(list, min_alloc_length, new_item) if((list)->max_length<(list)->length+1){if(min_alloc_length<1)return 0;(list)->items=realloc((list)->items, LIST_ITEM_SIZE(list) * ((list)->max_length+min_alloc_length));if((list)->items==NULL){(list)->max_length=0;(list)->length=0;return 0;}(list)->max_length+=min_alloc_length;}(list)->items[(list)->length]=*(new_item);(list)->length++;
 //call it for empty lists
 #define LIST_ALLOC(list, length) if(length>0){(list)->items = calloc(length, LIST_ITEM_SIZE(list));if ((list)->items != NULL)(list)->max_length=length;}
@@ -39,6 +29,7 @@
 #define LLIST_GETBYID(DEST,LIST,ID)for((DEST) = (LIST)->top;(DEST)!=NULL;(DEST)=(DEST)->next)if((DEST)->id==ID)break;
 
 #define FOREACH_LLIST(ITEM,LIST,T) for(T * ITEM=(LIST)->top;ITEM!=NULL;ITEM=ITEM->next)
+#define FOREACH_LLIST_N(ITEM,LIST,T) for(T * ITEM=(LIST).top;ITEM!=NULL;ITEM=ITEM->next)
 #define FORLLi(T) FOREACH_LLIST(item,list,T)
 #define LLIST_DEL_ITEM(ITEM, LIST, T) {T *prev = NULL;FOREACH_LLIST ( curr, LIST, T ) {if ( curr == (ITEM) ) {if ( prev != NULL ) {prev->next = curr->next;} else {(LIST)->top = curr->next;}if ( curr == (LIST)->last ) {(LIST)->last = prev;}(LIST)->length--; break;}prev = curr;}}
 #define LLIST_ADD_ITEM(ITEM, LIST) if ((LIST)->length < INT_MAX ) {if ( (LIST)->top == NULL ) {(LIST)->top = ITEM;} else {(LIST)->last->next = ITEM;}(LIST)->last = ITEM;(LIST)->length++;}

@@ -1,20 +1,23 @@
 
-extern App app;
-extern AppSerial serials[];
+
+extern int app_id;
+extern AppSerialList serials;
 extern ChannelLList channels;
 
 #include "../app/main.h"
+#include "../app/channels.h"
+#include "../app/serials.h"
 #include "../acp/command/main.h"
 #include "../model/channel/main.h"
 
-ACPLSCommandNode *srvc_getServerCommandNext(int prev_command);
-ACPLSCommandNode *srvc_getServerCommand(int command);
+AcplsCommandNode *srvc_getServerCommandNext(int prev_command);
+AcplsCommandNode *srvc_getServerCommand(int command);
 int srvc_getServerCommandCount();
 
-Channel *srvc_getChannel(ACPLS *item){
+Channel *srvc_getChannel(Acpls *item){
 	int id;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_ID, &id)){
-		FOREACH_CHANNEL(&channels){
+		FOREACH_CHANNEL{
 			if(id == channel->id){
 				return channel;
 			}
@@ -27,10 +30,10 @@ Channel *srvc_getChannel(ACPLS *item){
 	return NULL;
 }
 
-Channel *srvc_getServerChannel(ACPLS *item){
+Channel *srvc_getServerChannel(Acpls *item){
 	int id;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_ID, &id)){
-		FOREACH_CHANNEL(&channels){
+		FOREACH_CHANNEL{
 			if(id == channel->id && channel->mode == SERIAL_MODE_SERVER){
 				return channel;
 			}
@@ -43,11 +46,11 @@ Channel *srvc_getServerChannel(ACPLS *item){
 	return NULL;
 }
 
-Channel *srvc_getAppChannelNext(ACPLS *item){
+Channel *srvc_getAppChannelNext(Acpls *item){
 	int id;
 	int found = 0;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &id)){
-		FOREACH_CHANNEL(&channels){
+		FOREACH_CHANNEL{
 			if(found) return channel;
 			if(id == channel->id){
 				found = 1;
@@ -61,10 +64,10 @@ Channel *srvc_getAppChannelNext(ACPLS *item){
 	return NULL;
 }
 
-int srvc_forThisApp(ACPLS *item){
+int srvc_forThisApp(Acpls *item){
 	int id;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_ID, &id)){
-		if(id == app.id){
+		if(id == app_id){
 			return 1;
 		}else{
 			printdln("\tnot for this app");
@@ -75,156 +78,156 @@ int srvc_forThisApp(ACPLS *item){
 	return 0;
 }
 
-void srvc_setChannelParamUl(ACPLS *item, void (*func)(ChannelParam *, unsigned long )){
+void srvc_setChannelParamUl(Acpls *item, void (*func)(ChannelParam *, unsigned long )){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	unsigned long v;
 	if(acp_packGetCellUl(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &v)){
-		ChannelParam pchannel;
-		if(pmem_getPChannelForce(&pchannel, channel->ind)){
-			func(&pchannel, v);
-			pmem_savePChannel(&pchannel, channel->ind);
+		ChannelParam param;
+		if(pmem_getChannelParam(&param, channel->ind)){
+			func(&param, v);
+			pmem_saveChannelParam(&param, channel->ind);
 		}
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void srvc_setChannelParamI(ACPLS *item, void (*func)(ChannelParam *, int )){
+void srvc_setChannelParamI(Acpls *item, void (*func)(ChannelParam *, int )){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	int v;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &v)){
-		ChannelParam pchannel;
-		if(pmem_getPChannel(&pchannel, channel->ind)){
-			func(&pchannel, v);
-			pmem_savePChannel(&pchannel, channel->ind);
+		ChannelParam param;
+		if(pmem_getChannelParam(&param, channel->ind)){
+			func(&param, v);
+			pmem_saveChannelParam(&param, channel->ind);
 		}
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void srvc_setChannelParamF(ACPLS *item, void (*func)(ChannelParam *, double )){
+void srvc_setChannelParamF(Acpls *item, void (*func)(ChannelParam *, double )){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	double v;
 	if(acp_packGetCellF(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &v)){
-		ChannelParam pchannel;
-		if(pmem_getPChannel(&pchannel, channel->ind)){
-			func(&pchannel, v);
-			pmem_savePChannel(&pchannel, channel->ind);
+		ChannelParam param;
+		if(pmem_getChannelParam(&param, channel->ind)){
+			func(&param, v);
+			pmem_saveChannelParam(&param, channel->ind);
 		}
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void fgetChannelPmemParamUl(ACPLS *item, unsigned long (*getfunc)(ChannelParam *)){
+void fgetChannelPmemParamUl(Acpls *item, unsigned long (*getfunc)(ChannelParam *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
-	ChannelParam pdata;
+	if(channel == NULL) {acpls_reset(item); return;}
+	ChannelParam param;
 	int f = 0;unsigned long out = 0;
-	if(pmem_getPChannel(&pdata, channel->ind)){
-		out = getfunc(&pdata);
+	if(pmem_getChannelParam(&param, channel->ind)){
+		out = getfunc(&param);
 		f = 1;
 	}
 	int r = acp_buildPackIUlI(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out, f);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void fgetChannelPmemParamI(ACPLS *item, int (*getfunc)(ChannelParam *)){
+void fgetChannelPmemParamI(Acpls *item, int (*getfunc)(ChannelParam *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
-	ChannelParam pdata;
+	if(channel == NULL) {acpls_reset(item); return;}
+	ChannelParam param;
 	int f = 0;int out = 0;
-	if(pmem_getPChannel(&pdata, channel->ind)){
-		out = getfunc(&pdata);
+	if(pmem_getChannelParam(&param, channel->ind)){
+		out = getfunc(&param);
 		f = 1;
 	}
 	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out, f);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
-void fgetChannelPmemParamF(ACPLS *item, double (*getfunc)(ChannelParam *)){
+void fgetChannelPmemParamF(Acpls *item, double (*getfunc)(ChannelParam *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
-	ChannelParam pdata;
+	if(channel == NULL) {acpls_reset(item); return;}
+	ChannelParam param;
 	int f = 0;double out = 0;
-	if(pmem_getPChannel(&pdata, channel->ind)){
-		out = getfunc(&pdata);
+	if(pmem_getChannelParam(&param, channel->ind)){
+		out = getfunc(&param);
 		f = 1;
 	}
 	int r = acp_buildPackIFI(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out, f);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void fgetAppPmemParamI(ACPLS *item, int app_id, int (*getfunc)(AppConfig *)){
-	AppConfig pdata;
+void fgetAppPmemParamI(Acpls *item, int app_id, int (*getfunc)(AppParam *)){
+	AppParam pdata;
 	int f = 0;int out = 0;
-	if(pmem_getAppConfig(&pdata)){
+	if(pmem_getAppParam(&pdata)){
 		out = getfunc(&pdata);
 		f = 1;
 	}
 	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, out, f);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getChannelParamUl(ACPLS *item, unsigned long (*getfunc)(Channel *)){
+void srvc_getChannelParamUl(Acpls *item, unsigned long (*getfunc)(Channel *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	unsigned long out = getfunc(channel);
 	int r = acp_buildPackIUl(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getChannelParamI(ACPLS *item, int (*getfunc)(Channel *)){
+void srvc_getChannelParamI(Acpls *item, int (*getfunc)(Channel *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	int out = getfunc(channel);
 	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getConfirmChannelParamI(ACPLS *item, int (*getfunc)(Channel *)){
+void srvc_getConfirmChannelParamI(Acpls *item, int (*getfunc)(Channel *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	int out = getfunc(channel);
 	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out, 1);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getChannelParamF(ACPLS *item, double (*getfunc)(Channel *)){
+void srvc_getChannelParamF(Acpls *item, double (*getfunc)(Channel *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	double out = getfunc(channel);
 	int r = acp_buildPackIF(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getChannelParamStr(ACPLS *item, const char *(*getfunc)(Channel *)){
+void srvc_getChannelParamStr(Acpls *item, const char *(*getfunc)(Channel *)){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	const char *out = getfunc(channel);
 	int r = acp_buildPackIS(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, out);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void acnf_setId(ACPLS *item, HardwareSerial *serial){srvc_setChannelParamI(item, &PMEMCHANNEL_SET_FIELD_FUNC(id));}
+void acnf_setId(Acpls *item, HardwareSerial *serial){srvc_setChannelParamI(item, &PMEMCHANNEL_SET_FIELD_FUNC(id));}
 
 #define SC_FUN_SET(param) acnf_set__ ## param
-#define SC_DEF_FUN_SET_UL(param) void SC_FUN_SET(param) (ACPLS *item, HardwareSerial *serial){srvc_setChannelParamUl(item, &PMEMCHANNEL_SET_FIELD_FUNC(param));}
-#define SC_DEF_FUN_SET_I(param) void SC_FUN_SET(param) (ACPLS *item, HardwareSerial *serial){srvc_setChannelParamI(item, &PMEMCHANNEL_SET_FIELD_FUNC(param));}
-#define SC_DEF_FUN_SET_F(param) void SC_FUN_SET(param) (ACPLS *item, HardwareSerial *serial){srvc_setChannelParamF(item, &PMEMCHANNEL_SET_FIELD_FUNC(param));}
+#define SC_DEF_FUN_SET_UL(param) void SC_FUN_SET(param) (Acpls *item, HardwareSerial *serial){srvc_setChannelParamUl(item, &PMEMCHANNEL_SET_FIELD_FUNC(param));}
+#define SC_DEF_FUN_SET_I(param) void SC_FUN_SET(param) (Acpls *item, HardwareSerial *serial){srvc_setChannelParamI(item, &PMEMCHANNEL_SET_FIELD_FUNC(param));}
+#define SC_DEF_FUN_SET_F(param) void SC_FUN_SET(param) (Acpls *item, HardwareSerial *serial){srvc_setChannelParamF(item, &PMEMCHANNEL_SET_FIELD_FUNC(param));}
 
 #define SC_FUN_GET(param) acnf_get__ ## param
-#define SC_DEF_FUN_GET_UL(param) void SC_FUN_GET(param) (ACPLS *item, HardwareSerial *serial){fgetChannelPmemParamUl(item, &PMEMCHANNEL_GET_FIELD_FUNC(param));}
-#define SC_DEF_FUN_GET_I(param) void SC_FUN_GET(param) (ACPLS *item, HardwareSerial *serial){fgetChannelPmemParamI(item, &PMEMCHANNEL_GET_FIELD_FUNC(param));}
-#define SC_DEF_FUN_GET_F(param) void SC_FUN_GET(param) (ACPLS *item, HardwareSerial *serial){fgetChannelPmemParamF(item, &PMEMCHANNEL_GET_FIELD_FUNC(param));}
+#define SC_DEF_FUN_GET_UL(param) void SC_FUN_GET(param) (Acpls *item, HardwareSerial *serial){fgetChannelPmemParamUl(item, &PMEMCHANNEL_GET_FIELD_FUNC(param));}
+#define SC_DEF_FUN_GET_I(param) void SC_FUN_GET(param) (Acpls *item, HardwareSerial *serial){fgetChannelPmemParamI(item, &PMEMCHANNEL_GET_FIELD_FUNC(param));}
+#define SC_DEF_FUN_GET_F(param) void SC_FUN_GET(param) (Acpls *item, HardwareSerial *serial){fgetChannelPmemParamF(item, &PMEMCHANNEL_GET_FIELD_FUNC(param));}
 
 #define SC_FUN_GETR(param) acnf_getr__ ## param
-#define SC_DEF_FUN_GETR_UL(param) void SC_FUN_GETR(param) (ACPLS *item, HardwareSerial *serial){srvc_getChannelParamUl(item, &CHANNEL_FUN_GET(param));}
-#define SC_DEF_FUN_GETR_I(param) void SC_FUN_GETR(param) (ACPLS *item, HardwareSerial *serial){srvc_getChannelParamI(item, &CHANNEL_FUN_GET(param));}
-#define SC_DEF_FUN_GETR_F(param) void SC_FUN_GETR(param)(ACPLS *item, HardwareSerial *serial){srvc_getChannelParamF(item, &CHANNEL_FUN_GET(param));}
+#define SC_DEF_FUN_GETR_UL(param) void SC_FUN_GETR(param) (Acpls *item, HardwareSerial *serial){srvc_getChannelParamUl(item, &CHANNEL_FUN_GET(param));}
+#define SC_DEF_FUN_GETR_I(param) void SC_FUN_GETR(param) (Acpls *item, HardwareSerial *serial){srvc_getChannelParamI(item, &CHANNEL_FUN_GET(param));}
+#define SC_DEF_FUN_GETR_F(param) void SC_FUN_GETR(param)(Acpls *item, HardwareSerial *serial){srvc_getChannelParamF(item, &CHANNEL_FUN_GET(param));}
 
 #define SC_FUN_GETRC(param) acnf_getrc__ ## param
-#define SC_DEF_FUN_GETRC_I(param) void SC_FUN_GETRC(param) (ACPLS *item, HardwareSerial *serial){srvc_getConfirmChannelParamI(item, &CHANNEL_FUN_GET(param));}
+#define SC_DEF_FUN_GETRC_I(param) void SC_FUN_GETRC(param) (Acpls *item, HardwareSerial *serial){srvc_getConfirmChannelParamI(item, &CHANNEL_FUN_GET(param));}
 
 
 
@@ -270,118 +273,118 @@ SC_DEF_FUN_GETR_I(device_kind)
 SC_DEF_FUN_GETR_I(enable)
 
 
-void acnf_getErrorStr(ACPLS *item, HardwareSerial *serial){srvc_getChannelParamStr(item, &channel_getErrorStr);}
-void acnf_getStateStr(ACPLS *item, HardwareSerial *serial){srvc_getChannelParamStr(item, &channel_getStateStr);}
+void acnf_getErrorStr(Acpls *item, HardwareSerial *serial){srvc_getChannelParamStr(item, &channel_getErrorStr);}
+void acnf_getStateStr(Acpls *item, HardwareSerial *serial){srvc_getChannelParamStr(item, &channel_getStateStr);}
 
-void acnf_getExists(ACPLS *item, HardwareSerial *serial){
+void acnf_getExists(Acpls *item, HardwareSerial *serial){
 	int id;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_ID, &id)){
-		FOREACH_CHANNEL(&channels){
+		FOREACH_CHANNEL{
 			if(id == channel->id){
 				goto success;
 			}
 		}
-		if(id == app.id)	goto success;
+		if(id == app_id)	goto success;
 	}
 	printd("id not found: "); printdln(id);
-	ACPLS_RESET
+	acpls_reset(item);
 	return;
 	success:
-	if(acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, id, 1)){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, id, 1)){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void acnf_getFTS (ACPLS *item, HardwareSerial *serial){
+void acnf_getFTS (Acpls *item, HardwareSerial *serial){
 	Channel *channel = srvc_getChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	FTS fts;
 	fts.value = 0;
 	fts.state = 1;
 	fts.tm = getCurrentTs();
 	if(acp_buildPackIFTS(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, channel->id, &fts)){
-		ACPLS_PREP_SEND
+		acpls_prepWrite(item);
 	}else{
-		ACPLS_RESET
+		acpls_reset(item);
 	}
 }
 
-void acnf_setIdFirst(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void acnf_setIdFirst(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int v;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &v)){
-		FOREACH_CHANNEL(&channels){
-			ChannelParam pchannel;
-			if(pmem_getPChannel(&pchannel, channel->ind)){
-				pchannel.id = v; v++;
-				pmem_savePChannel(&pchannel, channel->ind);
+		FOREACH_CHANNEL{
+			ChannelParam param;
+			if(pmem_getChannelParam(&param, channel->ind)){
+				param.id = v; v++;
+				pmem_saveChannelParam(&param, channel->ind);
 			}
 		}
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_setText(ACPLS *item, HardwareSerial *serial){
+void acnf_setText(Acpls *item, HardwareSerial *serial){
 	Channel *channel = srvc_getServerChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	char v[CHANNEL_DISPLAY_ROWS];
 	if(acp_packGetCellS(item->acpl->buf, ACP_REQUEST_IND_PARAM1, v, CHANNEL_DISPLAY_ROWS)){
 		channel_serverPrint(channel, v);
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_setTextBlink(ACPLS *item, HardwareSerial *serial){
+void acnf_setTextBlink(Acpls *item, HardwareSerial *serial){
 	Channel *channel = srvc_getServerChannel(item);
-	if(channel == NULL) {ACPLS_RESET return;}
+	if(channel == NULL) {acpls_reset(item); return;}
 	char v[CHANNEL_DISPLAY_ROWS];
 	if(acp_packGetCellS(item->acpl->buf, ACP_REQUEST_IND_PARAM1, v, CHANNEL_DISPLAY_ROWS)){
 		channel_serverPrintBlink(channel, v);
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_start(ACPLS *item, HardwareSerial *serial){
+void acnf_start(Acpls *item, HardwareSerial *serial){
 	Channel *channel = srvc_getChannel(item);
 	if(channel!=NULL){
 		channel_start(channel);
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_stop(ACPLS *item, HardwareSerial *serial){
+void acnf_stop(Acpls *item, HardwareSerial *serial){
 	Channel *channel = srvc_getChannel(item);
 	if(channel!=NULL){
 		channel_stop(channel);
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_reset(ACPLS *item, HardwareSerial *serial){
+void acnf_reset(Acpls *item, HardwareSerial *serial){
 	Channel *channel = srvc_getChannel(item);
 	if(channel!=NULL){
 		channel_reset(channel);
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_getAppChannelCount (ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
-	if(acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app.id, CHANNEL_COUNT)){
-		ACPLS_PREP_SEND
+void acnf_getAppChannelCount (Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
+	if(acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, channels.length)){
+		acpls_prepWrite(item);
 	}else{
-		ACPLS_RESET
+		acpls_reset(item);
 	}
 }
 
-void acnf_getChannelIdFirst(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void acnf_getChannelIdFirst(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int out;
-	int success = channels_getIdFirst(&channels, &out);
-	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app.id, out, success);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	int success = channelLList_getIdFirst(&channels, &out);
+	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, out, success);
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void acnf_getChannelIdNext (ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void acnf_getChannelIdNext (Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	Channel *channel = srvc_getAppChannelNext(item);
 	int success = 0;
 	int id = 0;
@@ -389,200 +392,186 @@ void acnf_getChannelIdNext (ACPLS *item, HardwareSerial *serial){
 		success = 1;
 		id = channel->id;
 	}
-	if(acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app.id, id, success)){
-		ACPLS_PREP_SEND
+	if(acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, id, success)){
+		acpls_prepWrite(item);
 	}else{
-		ACPLS_RESET
+		acpls_reset(item);
 	}
 }
 
-void acnf_getAppAcpCommandExists(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void acnf_getAppAcpCommandExists(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int command;
 	int success = 0;
 	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &command)){
 		goto done;
 	}
-	{ACPLSCommandNode *node = srvc_getServerCommand(command);
+	{AcplsCommandNode *node = srvc_getServerCommand(command);
 	if(node != NULL) {
 		success = 1;
 	}}
 	done:
-	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app.id, command, success);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, command, success);
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void acnf_getAppServerCommandCount(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void acnf_getAppServerCommandCount(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int c = srvc_getServerCommandCount();
-	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app.id, c);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app_id, c);
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void acnf_getAppServerCommandFirst(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
-	extern ACPLSCommandNode acnodes[];
-	int first_command = acnodes[0].command;
-	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app.id, first_command);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+void acnf_getAppServerCommandFirst(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
+	extern AcplsCommandNodeList server_nodes;
+	if(server_nodes.length < 1) {acpls_reset(item); return;}
+	int first_command = server_nodes.items[0].command;
+	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app_id, first_command);
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void acnf_getAppServerCommandNext(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void acnf_getAppServerCommandNext(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int prev_command;
 	int next_command = 0;
 	int success = 0;
 	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &prev_command)){
 		goto done;
 	}
-	{ACPLSCommandNode *node = srvc_getServerCommandNext(prev_command);
+	{AcplsCommandNode *node = srvc_getServerCommandNext(prev_command);
 	if(node != NULL){
 		success = 1;
 		next_command = node->command;
 	}}
 	done:
-	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app.id, next_command, success);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	int r = acp_buildPackIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, next_command, success);
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getrAppFieldSF(ACPLS *item, const char * (*getfunc)(App *)){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
-	extern App app;
-	const char *v = getfunc(&app);
-	int r = acp_buildPackIS(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app.id, v);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+void srvc_getrAppFieldSF(Acpls *item, const char * (*getfunc)()){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
+	const char *v = getfunc();
+	int r = acp_buildPackIS(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app_id, v);
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getAppConfigField(ACPLS *item, int (*getfunc)(AppConfig *)){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
-	AppConfig conf;
+void srvc_getAppParamField(Acpls *item, int (*getfunc)(AppParam *)){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
+	AppParam conf;
 	int v = 0;
 	int result = 0;
-	if(pmem_getAppConfig(&conf)){
+	if(pmem_getAppParam(&conf)){
 		v = getfunc(&conf);
 		result = 1;
 	}
 	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 v, result);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_getAppConfigFieldBr(ACPLS *item, int (*getfunc)(AppConfig *)){
-	AppConfig conf;
+void srvc_getAppParamFieldBr(Acpls *item, int (*getfunc)(AppParam *)){
+	AppParam conf;
 	int v = 0;
 	int result = 0;
-	if(pmem_getAppConfig(&conf)){
+	if(pmem_getAppParam(&conf)){
 		v = getfunc(&conf);
 		result = 1;
 	}
 	int r = acp_buildPackII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 v, result);
-	if(r){ACPLS_PREP_SEND}else{ACPLS_RESET}
+	if(r){acpls_prepWrite(item);}else{acpls_reset(item);}
 }
 
-void srvc_setAppConfigField(ACPLS *item, int (*checkfunc)(int ), void (*setfunc)(AppConfig *, int v)){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void srvc_setAppParamField(Acpls *item, int (*checkfunc)(int ), void (*setfunc)(AppParam *, int v)){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int v;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &v)){
-		AppConfig conf;
-		if(pmem_getAppConfig(&conf)){
+		AppParam conf;
+		if(pmem_getAppParam(&conf)){
 			if(checkfunc(v)){
 				setfunc(&conf, v);
-				pmem_saveAppConfig(&conf);
+				pmem_saveAppParam(&conf);
 			}
 		}
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void srvc_setAppSerialConfigField(ACPLS *item, int (*checkfunc)(int ), void (*setfunc)(AppSerialConfig *, int v)){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void srvc_setAppSerialParamFieldI(Acpls *item, int (*checkfunc)(int ), void (*setfunc)(AppSerialParam *, int v)){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int serial_id;
-	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &serial_id)){
-		goto done;
-	}
+	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &serial_id)) {acpls_reset(item); return;}
 	int v;
-	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM2, &v)){
-		goto done;
-	}
-	if(!checkfunc(v)){
-		goto done;
-	}
-	AppConfig conf;
-	if(!pmem_getAppConfig(&conf)){
-		goto done;
-	}
-	FOREACH_SERIAL(i){
-		if(serial_id == conf.serial[i].id){
-			setfunc(&conf.serial[i], v);
-			pmem_saveAppConfig(&conf);
-			goto done;
-		}
-	}
-	done:
-	ACPLS_RESET
+	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM2, &v)) {acpls_reset(item); return;}
+	if(!checkfunc(v)) {acpls_reset(item); return;}
+	size_t serial_ind = serials_getIndById(serial_id);
+	if(serial_ind == -1) {acpls_reset(item); return;}
+	AppSerialParam param;
+	if(!pmem_getSerialParam(&param, serial_ind)) {acpls_reset(item); return;}
+	setfunc(&param, v);
+	pmem_saveSerialParam(&param, serial_ind);
 }
 
-void srvc_getAppConfigSrField(ACPLS *item, int (*getfunc)(AppSerialConfig *)){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
+void srvc_getAppParamSrFieldI(Acpls *item, int (*getfunc)(AppSerialParam *)){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
 	int serial_id;
-	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &serial_id)){ACPLS_RESET return;}
-	AppConfig conf;
-	if(!pmem_getAppConfig(&conf)){ACPLS_RESET return;}
-	int v;
+	if(!acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_PARAM1, &serial_id)) {acpls_reset(item); return;}
+	size_t serial_ind = serials_getIndById(serial_id);
+	int v = 0;
 	int result = 0;
-	FOREACH_SERIAL(i){
-		AppSerialConfig *serial = &conf.serial[i];
-		if(serial_id == serial->id){
-			v = getfunc(serial);
-			result = 1;
-			goto done;
-		}
-	}
+	AppSerialParam param;
+	if(serial_ind == -1) goto done;
+	if(!pmem_getSerialParam(&param, serial_ind)) goto done;
+	v = getfunc(&param);
+	result = 1;
 	done:
-	if(result && acp_buildPackIIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE,	 app.id, serial_id, v, result)){
-		ACPLS_PREP_SEND
+	if(acp_buildPackIIII(item->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_RESPONSE, app_id, serial_id, v, result)){
+		acpls_prepWrite(item);
 		return;
 	}
-	ACPLS_RESET
+	failed:
+	acpls_reset(item);
 }
 
-void acnf_getAppSerialRate(ACPLS *item, HardwareSerial *serial){srvc_getAppConfigSrField(item, &APPCONFIGSR_GET_FIELD_FUNC(rate));}
-void acnf_getAppSerialConfig(ACPLS *item, HardwareSerial *serial){srvc_getAppConfigSrField(item, &APPCONFIGSR_GET_FIELD_FUNC(config));}
-void acnf_getAppSerialMode(ACPLS *item, HardwareSerial *serial){srvc_getAppConfigSrField(item, &APPCONFIGSR_GET_FIELD_FUNC(mode));}
+void acnf_getAppSerialRate(Acpls *item, HardwareSerial *serial){srvc_getAppParamSrFieldI(item, &APP_SERIAL_PARAM_GET_FIELD_FUNC_I(rate));}
+void acnf_getAppSerialParam(Acpls *item, HardwareSerial *serial){srvc_getAppParamSrFieldI(item, &APP_SERIAL_PARAM_GET_FIELD_FUNC_I(config));}
+void acnf_getAppSerialMode(Acpls *item, HardwareSerial *serial){srvc_getAppParamSrFieldI(item, &APP_SERIAL_PARAM_GET_FIELD_FUNC_I(mode));}
 
-void acnf_getAppId(ACPLS *item, HardwareSerial *serial){srvc_getAppConfigFieldBr(item, &APPCONFIG_GET_FIELD_FUNC(id));}
-void acnf_getAppState(ACPLS *item, HardwareSerial *serial){srvc_getrAppFieldSF(item, &app_getStateStr);}
-void acnf_getAppError(ACPLS *item, HardwareSerial *serial){srvc_getrAppFieldSF(item, &app_getErrorStr);}
+void acnf_getAppId(Acpls *item, HardwareSerial *serial){srvc_getAppParamFieldBr(item, &APP_PARAM_GET_FIELD_FUNC(id));}
+void acnf_getAppState(Acpls *item, HardwareSerial *serial){srvc_getrAppFieldSF(item, &app_getStateStr);}
+void acnf_getAppError(Acpls *item, HardwareSerial *serial){srvc_getrAppFieldSF(item, &app_getErrorStr);}
 
-void acnf_setAppId(ACPLS *item, HardwareSerial *serial){
+void acnf_setAppId(Acpls *item, HardwareSerial *serial){
 	int v;
 	if(acp_packGetCellI(item->acpl->buf, ACP_REQUEST_IND_ID, &v)){
-		AppConfig conf;
-		if(pmem_getAppConfig(&conf)){
-			if(appc_checkId(v)){
-				app.id = v;
-				conf.id = app.id;
-				pmem_saveAppConfig(&conf);
+		AppParam param;
+		if(pmem_getAppParam(&param)){
+			param.id = v;
+			if(appParam_check(&param)){
+				pmem_saveAppParam(&param);
+				if(pmem_getAppParam(&param)){
+					app_id = param.id;
+				}
 			}
 		}
 	}
-	ACPLS_RESET
+	acpls_reset(item);
 }
 
-void acnf_appReset(ACPLS *item, HardwareSerial *serial){
-	if(!srvc_forThisApp(item)) {ACPLS_RESET return;}
-	app_reset(&app);
-	ACPLS_RESET
+void acnf_appReset(Acpls *item, HardwareSerial *serial){
+	if(!srvc_forThisApp(item)) {acpls_reset(item); return;}
+	app_reset();
+	acpls_reset(item);
 }
 
-void acnf_setAppSerialConfig(ACPLS *item, HardwareSerial *serial){srvc_setAppSerialConfigField(item, &appc_checkSerialConfig, &APPCONFIGSR_SET_FIELD_FUNC(config));}
-void acnf_setAppSerialRate(ACPLS *item, HardwareSerial *serial){srvc_setAppSerialConfigField(item, &appc_checkSerialRate, &APPCONFIGSR_SET_FIELD_FUNC(rate));}
-void acnf_setAppSerialMode(ACPLS *item, HardwareSerial *serial){srvc_setAppSerialConfigField(item, &serial_checkMode, &APPCONFIGSR_SET_FIELD_FUNC(mode));}
+void acnf_setAppSerialConfig(Acpls *item, HardwareSerial *serial){srvc_setAppSerialParamFieldI(item, &serial_checkConfig, &APP_SERIAL_PARAM_SET_FIELD_FUNC_I(config));}
+void acnf_setAppSerialRate(Acpls *item, HardwareSerial *serial){srvc_setAppSerialParamFieldI(item, &serial_checkRate, &APP_SERIAL_PARAM_SET_FIELD_FUNC_I(rate));}
+void acnf_setAppSerialMode(Acpls *item, HardwareSerial *serial){srvc_setAppSerialParamFieldI(item, &serial_checkMode, &APP_SERIAL_PARAM_SET_FIELD_FUNC_I(mode));}
 
 #define SS_GETR		SERIAL_SERVER_RAM_GET_COMMANDS
 #define SS_GET		SERIAL_SERVER_NVRAM_GET_COMMANDS
 #define SS_SET		SERIAL_SERVER_NVRAM_SET_COMMANDS
 
-ACPLSCommandNode acnodes[] = {
+AcplsCommandNode acnodes[] = {
 
 	{CMD_SET_INDICATOR_TEXT,					&acnf_setText},
 	{CMD_SET_INDICATOR_TEXT_BLINK,				&acnf_setTextBlink},
@@ -663,14 +652,14 @@ ACPLSCommandNode acnodes[] = {
 #endif
 
 #ifdef SS_SET
-	{CMD_SET_APP_ID,							&acnf_setAppId},
+	{CMD_SETB_APP_ID,							&acnf_setAppId},
 	{CMD_SET_APP_CHANNEL_ID_FIRST,				&acnf_setIdFirst},
 #endif
 
 	{CMD_APP_RESET,								&acnf_appReset},
 	
 #ifdef SS_GETR
-	{CMD_GET_APP_ID,							&acnf_getAppId},
+	{CMD_GETB_APP_ID,							&acnf_getAppId},
 	{CMD_GET_APP_STATE,							&acnf_getAppState},
 	{CMD_GET_APP_ERROR,							&acnf_getAppError},
 	{CMD_GET_APP_SERVER_COMMAND_NEXT,			&acnf_getAppServerCommandNext},
@@ -686,7 +675,7 @@ ACPLSCommandNode acnodes[] = {
 
 #ifdef SS_GET
 	{CMD_GET_APP_SERIAL_RATE,					&acnf_getAppSerialRate},
-	{CMD_GET_APP_SERIAL_CONFIG,					&acnf_getAppSerialConfig},
+	{CMD_GET_APP_SERIAL_CONFIG,					&acnf_getAppSerialParam},
 	{CMD_GET_APP_SERIAL_MODE,					&acnf_getAppSerialMode}
 #endif
 
@@ -694,15 +683,18 @@ ACPLSCommandNode acnodes[] = {
 
 #define ACPL_CNODE_COUNT (sizeof acnodes / sizeof acnodes[0])
 
+AcplsCommandNodeList server_nodes = {.items = acnodes, .length = ACPL_CNODE_COUNT, .max_length = ACPL_CNODE_COUNT};
+
 int srvc_getServerCommandCount(){
 	return ACPL_CNODE_COUNT;
 }
 
-ACPLSCommandNode *srvc_getServerCommandNext(int prev_command){
+AcplsCommandNode *srvc_getServerCommandNext(int prev_command){
 	int found = 0;
-	for(size_t i = 0; i<ACPL_CNODE_COUNT; i++){
-		if(found) return &acnodes[i];
-		if(acnodes[i].command == prev_command){
+	for(size_t i = 0; i<server_nodes.length; i++){
+		AcplsCommandNode *cnode = &server_nodes.items[i];
+		if(found) return cnode;
+		if(cnode->command == prev_command){
 			found = 1;
 			continue; 
 		}
@@ -710,10 +702,11 @@ ACPLSCommandNode *srvc_getServerCommandNext(int prev_command){
 	return NULL;
 }
 
-ACPLSCommandNode *srvc_getServerCommand(int command){
-	for(size_t i = 0; i<ACPL_CNODE_COUNT; i++){
-		if(acnodes[i].command == command){
-			return &acnodes[i];
+AcplsCommandNode *srvc_getServerCommand(int command){
+	for(size_t i = 0; i<server_nodes.length; i++){
+		AcplsCommandNode *cnode = &server_nodes.items[i];
+		if(cnode->command == command){
+			return cnode;
 		}
 	}
 	return NULL;

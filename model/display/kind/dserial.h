@@ -14,6 +14,6 @@ typedef struct {
 	iDisplay im_display;
 }DSerial;
 
-extern int dserial_begin(DSerial *item);
+extern int dserial_begin(DSerial *self);
 
 #endif

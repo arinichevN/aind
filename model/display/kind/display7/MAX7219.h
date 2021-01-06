@@ -36,6 +36,6 @@ typedef struct max7219_st{
 
 extern MAX7219 *max7219_new();
 
-extern void max7219_begin(MAX7219 *item, int din, int clk, int cs);
+extern void max7219_begin(MAX7219 *self, int din, int clk, int cs);
 
 #endif

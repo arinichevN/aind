@@ -4,11 +4,12 @@
 #include "../../util/dstructure.h"
 #include "../../util/common.h"
 #include "../../util/ton.h"
-#include "../../app/serial.h"
+#include "../../app/serials.h"
 #include "../../acp/main.h"
 #include "../../acp/loop/main.h"
 #include "../../acp/loop/client/multi.h"
-#include "../../acp/loop/spy.h"
+#include "../../acp/loop/spy/main.h"
+#include "../../acp/command/main.h"
 #include "../display/main.h"
 #include "../../pmem/main.h"
 #include "param.h"
@@ -44,8 +45,8 @@ struct channel_st {
 	
 	int device_kind;
 	int need_spy_response;
-	ACPLCM *acplcm;
-	iACPLYClient im_spy_client;
+	Acplcm *serial_client;
+	iAcplyClient im_spy_client;
 	Display display;
 	void (*parseNshowSpyData)(Channel *, char *buf);
 	int (*parseNShowSpyRequestData)(Channel *, char *buf);
@@ -56,40 +57,32 @@ struct channel_st {
 	Channel *next;
 };
 
-DEC_LIST(Channel)
-DEC_LLIST(Channel)
-
-#define FOREACH_CHANNEL(LIST) FOREACH_LLIST(channel, LIST, Channel)
-#define CHANNEL_SAVE_FIELD(F) ChannelParam pchannel; if(pmem_getPChannel(&pchannel, item->ind)){pchannel.F = item->F; pmem_savePChannel(&pchannel, item->ind);}
+#define CHANNEL_SAVE_FIELD(F) ChannelParam pchannel; if(pmem_getChannelParam(&pchannel, self->ind)){pchannel.F = self->F; pmem_saveChannelParam(&pchannel, self->ind);}
 #define CHANNEL_FUN_GET(param) channel_get_ ## param
 
-extern const char *channel_getStateStr(Channel *item);
-extern const char *channel_getErrorStr(Channel *item);
-extern void channel_begin(Channel *item, size_t ind);
-extern void channels_begin(ChannelLList *channels);
-extern int channels_getIdFirst(ChannelLList *channels, int *out);
-extern int channels_coopSerials(ChannelLList *channels, AppSerial serials[]);
-extern int channel_start(Channel *item);
-extern int channel_stop(Channel *item);
-extern int channel_disconnect(Channel *item);
-extern int channel_reset(Channel *item);
-extern void channel_free(Channel *item);
-extern void channel_serverPrint(Channel *item, const char *str);
-extern void channel_serverPrintBlink(Channel *item, const char *str);
-extern int channels_activeExists(ChannelLList *channels);
+extern const char *channel_getStateStr(Channel *self);
+extern const char *channel_getErrorStr(Channel *self);
+extern void channel_begin(Channel *self, size_t ind);
+extern int channel_start(Channel *self);
+extern int channel_stop(Channel *self);
+extern int channel_disconnect(Channel *self);
+extern int channel_reset(Channel *self);
+extern void channel_free(Channel *self);
+extern void channel_serverPrint(Channel *self, const char *str);
+extern void channel_serverPrintBlink(Channel *self, const char *str);
 
-extern int CHANNEL_FUN_GET(enable)(Channel *item);
-extern int CHANNEL_FUN_GET(device_kind)(Channel *item);
-extern int CHANNEL_FUN_GET(display_kind)(Channel *item);
-extern int CHANNEL_FUN_GET(display_p1)(Channel *item);
-extern int CHANNEL_FUN_GET(display_p2)(Channel *item);
-extern int CHANNEL_FUN_GET(display_p3)(Channel *item);
-extern int CHANNEL_FUN_GET(display_text_alignment)(Channel *item);
-extern int CHANNEL_FUN_GET(serial_id)(Channel *item);
-extern int CHANNEL_FUN_GET(mode)(Channel *item);
-extern int CHANNEL_FUN_GET(remote_id)(Channel *item);
-extern int CHANNEL_FUN_GET(acp_command)(Channel *item);
-extern unsigned long CHANNEL_FUN_GET(time)(Channel *item);
-extern int CHANNEL_FUN_GET(float_precision)(Channel *item);
+extern int CHANNEL_FUN_GET(enable)(Channel *self);
+extern int CHANNEL_FUN_GET(device_kind)(Channel *self);
+extern int CHANNEL_FUN_GET(display_kind)(Channel *self);
+extern int CHANNEL_FUN_GET(display_p1)(Channel *self);
+extern int CHANNEL_FUN_GET(display_p2)(Channel *self);
+extern int CHANNEL_FUN_GET(display_p3)(Channel *self);
+extern int CHANNEL_FUN_GET(display_text_alignment)(Channel *self);
+extern int CHANNEL_FUN_GET(serial_id)(Channel *self);
+extern int CHANNEL_FUN_GET(mode)(Channel *self);
+extern int CHANNEL_FUN_GET(remote_id)(Channel *self);
+extern int CHANNEL_FUN_GET(acp_command)(Channel *self);
+extern unsigned long CHANNEL_FUN_GET(time)(Channel *self);
+extern int CHANNEL_FUN_GET(float_precision)(Channel *self);
 
 #endif 

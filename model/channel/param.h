@@ -17,5 +17,5 @@ typedef struct {
 	int float_precision;
 } ChannelParam;
 
-#define CHANNEL_DEFAULT_PARAMS chdefps
+//#define CHANNEL_DEFAULT_PARAMS chdefps
 #endif 

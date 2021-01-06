@@ -15,9 +15,6 @@
 #define ACP_PACK_TIMEOUT_MS			500UL
 #define ACP_BUSY_TIMEOUT_MS			30UL
 
-#define ACPL_RESET acpl_reset(item);
-#define ACPL_WBUF_PREP item->wi = 0UL; item->wbuf_size = strlen(item->buf) * sizeof (*item->buf);
-
 typedef struct {
 	char buf[ACP_BUF_MAX_LENGTH];
 	size_t len;
@@ -26,24 +23,24 @@ typedef struct {
 	Ton busy_tmr;
 	Ton pack_tmr;
 	int pack;
-} ACPL;
+} Acpl;
 
 
-extern int acpl_begin(ACPL **item);
+extern int acpl_begin(Acpl **self);
 
-extern void acpl_free(ACPL *item);
+extern void acpl_free(Acpl *self);
 
-extern void acpl_reset(ACPL *item);
+extern void acpl_reset(Acpl *self);
 
-extern int acpl_readResponse(ACPL *item, HardwareSerial *serial);
+extern int acpl_readResponse(Acpl *self, HardwareSerial *serial);
 
-extern int acpl_readRequest(ACPL *item, HardwareSerial *serial);
+extern int acpl_readRequest(Acpl *self, HardwareSerial *serial);
 
-extern inline void acpl_prepWrite(ACPL *item);
+extern inline void acpl_prepWrite(Acpl *self);
 
-extern inline void acpl_prepRead(ACPL *item);
+extern inline void acpl_prepRead(Acpl *self);
 
-extern int acpl_write(ACPL *item, HardwareSerial *serial);
+extern int acpl_write(Acpl *self, HardwareSerial *serial);
 
 
 #endif 

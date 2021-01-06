@@ -1,85 +1,85 @@
 #include "main.h"
 
-#define ACPLC_START(MODE)  item->mode = MODE; ton_reset(&item->acpl->pack_tmr); item->control = acplc_SEND_REQUEST;
+#define ACPLC_START(MODE)  self->mode = MODE; ton_reset(&self->acpl->pack_tmr); self->control = acplc_SEND_REQUEST;
 
-void acplc_READ_RESPONSE(ACPLC *item, HardwareSerial *serial);
-void acplc_SEND_REQUEST(ACPLC *item, HardwareSerial *serial);
-void acplc_IDLE(ACPLC *item, HardwareSerial *serial);
-void acplc_DONE(ACPLC *item, HardwareSerial *serial);
-void acplc_ERROR(ACPLC *item, HardwareSerial *serial);
+void acplc_READ_RESPONSE(Acplc *self, HardwareSerial *serial);
+void acplc_SEND_REQUEST(Acplc *self, HardwareSerial *serial);
+void acplc_IDLE(Acplc *self, HardwareSerial *serial);
+void acplc_DONE(Acplc *self, HardwareSerial *serial);
+void acplc_ERROR(Acplc *self, HardwareSerial *serial);
 	
 	
-ACPLC *acplc_new(){
-	size_t sz = sizeof (ACPLC);
-	ACPLC *out = (ACPLC *) malloc(sz);
+Acplc *acplc_new(){
+	size_t sz = sizeof (Acplc);
+	Acplc *out = (Acplc *) malloc(sz);
 	if(out == NULL){ printdln("acplc_new: failed");}
 	printd("acplc_new: "); printd(sz); printdln(" bytes allocated");
 	return out;
 }
 
-void acplc_reset(ACPLC *item){
-	if(item == NULL) return;
-	acpl_reset(item->acpl);
-	item->control = acplc_IDLE;
+void acplc_reset(Acplc *self){
+	if(self == NULL) return;
+	acpl_reset(self->acpl);
+	self->control = acplc_IDLE;
 }
 
-int acplc_begin(ACPLC **item){
-	ACPLC *titem = acplc_new();
-	if(titem == NULL) {printdln("acplc: failed to allocate memory"); return 0;}
-	titem->acpl = NULL;
-	if(!acpl_begin(&titem->acpl)) return 0;
-	acplc_reset(titem);
-	*item = titem;
+int acplc_begin(Acplc **self){
+	Acplc *tself = acplc_new();
+	if(tself == NULL) {printdln("acplc: failed to allocate memory"); return 0;}
+	tself->acpl = NULL;
+	if(!acpl_begin(&tself->acpl)) return 0;
+	acplc_reset(tself);
+	*self = tself;
 	return 1;
 }
 
 
 
-void acplc_free(ACPLC *item){
-	if(item == NULL) return;
-	acpl_free(item->acpl);
-	free(item);
+void acplc_free(Acplc *self){
+	if(self == NULL) return;
+	acpl_free(self->acpl);
+	free(self);
 }
 
-int acplc_getState(ACPLC *item){
-	if(item->control == acplc_IDLE){return ACP_IDLE;}
-	else if(item->control == acplc_SEND_REQUEST){ return ACP_SEND_REQUEST;}
-	else if(item->control == acplc_READ_RESPONSE){return ACP_READ_RESPONSE;}
-	else if(item->control == acplc_DONE){return ACP_DONE;}
-	else if(item->control == acplc_ERROR){return ACP_ERROR;}
+int acplc_getState(Acplc *self){
+	if(self->control == acplc_IDLE){return ACP_IDLE;}
+	else if(self->control == acplc_SEND_REQUEST){ return ACP_SEND_REQUEST;}
+	else if(self->control == acplc_READ_RESPONSE){return ACP_READ_RESPONSE;}
+	else if(self->control == acplc_DONE){return ACP_DONE;}
+	else if(self->control == acplc_ERROR){return ACP_ERROR;}
 	printdln("state not found");
 	return ACP_NOT_FOUND;
 }
 
 
-void acplc_READ_RESPONSE(ACPLC *item, HardwareSerial *serial){
-	int r = acpl_readResponse(item->acpl, serial);
+void acplc_READ_RESPONSE(Acplc *self, HardwareSerial *serial){
+	int r = acpl_readResponse(self->acpl, serial);
 	switch(r){
 		case ACP_DONE:
-			item->control = acplc_DONE;
+			self->control = acplc_DONE;
 			return;
 		case ACP_BUSY:
 			return;
 	}
 	printdln("acplc read: error ");
-	item->control = acplc_ERROR;
+	self->control = acplc_ERROR;
 }
 
-void acplc_SEND_REQUEST(ACPLC *item, HardwareSerial *serial){
-	int r = acpl_write(item->acpl, serial);
+void acplc_SEND_REQUEST(Acplc *self, HardwareSerial *serial){
+	int r = acpl_write(self->acpl, serial);
 	switch(r){
 		case ACP_DONE:
-			switch(item->mode){
+			switch(self->mode){
 				case ACPLC_MODE_SEND:
-					item->control = acplc_DONE;
+					self->control = acplc_DONE;
 					return;
 				case ACPLC_MODE_SEND_READ:
-					acpl_prepRead(item->acpl);
-					item->control = acplc_READ_RESPONSE;
+					acpl_prepRead(self->acpl);
+					self->control = acplc_READ_RESPONSE;
 					return;
 				default:
 					printdln("acplc write: unknown mode");
-					item->control = acplc_ERROR;
+					self->control = acplc_ERROR;
 					return;
 			}
 			break;
@@ -87,19 +87,19 @@ void acplc_SEND_REQUEST(ACPLC *item, HardwareSerial *serial){
 			return;
 	}
 	printd("acplc_SEND_REQUEST: write returned "); printdln(acp_getStateStr(r));
-	item->control = acplc_ERROR;
+	self->control = acplc_ERROR;
 }
 
-void acplc_IDLE(ACPLC *item, HardwareSerial *serial){
+void acplc_IDLE(Acplc *self, HardwareSerial *serial){
 	;
 }
 
-void acplc_DONE(ACPLC *item, HardwareSerial *serial){
-	acplc_reset(item);
+void acplc_DONE(Acplc *self, HardwareSerial *serial){
+	acplc_reset(self);
 }
 
-void acplc_ERROR(ACPLC *item, HardwareSerial *serial){
-	item->control = acplc_IDLE;
+void acplc_ERROR(Acplc *self, HardwareSerial *serial){
+	self->control = acplc_IDLE;
 }
 
 #include "send.c"

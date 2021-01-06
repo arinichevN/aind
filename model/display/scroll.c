@@ -1,16 +1,16 @@
 #include "scroll.h"
 
-static void scroll_RUN(Scroll *item);
+static void scroll_RUN(Scroll *self);
 
-static void scroll_IDLE(Scroll *item){
+static void scroll_IDLE(Scroll *self){
 	;
 }
 
-static void scroll_RESET(Scroll *item){
-	memset(item->data->signs, 0, sizeof (*item->data->signs) * item->data->signs_count);
-	ton_expire(&item->tmr);
-	item->i = 0;
-	item->control = scroll_RUN;
+static void scroll_RESET(Scroll *self){
+	memset(self->data->signs, 0, sizeof (*self->data->signs) * self->data->signs_count);
+	ton_expire(&self->tmr);
+	self->i = 0;
+	self->control = scroll_RUN;
 }
 
 static void scroll_scrollNone(uint8_t *signs, size_t signs_count, uint8_t *buf, size_t blen, size_t i){
@@ -39,37 +39,37 @@ static void scroll_scrollMaxFirst(uint8_t *signs, size_t signs_count, uint8_t *b
 	signs[0] = c;
 }
 
-static void scroll_RUN(Scroll *item){
-	if(tonr(&item->tmr)){
-		if(item->i >= item->blen + item->data->signs_count){
-			item->control = scroll_RESET;
+static void scroll_RUN(Scroll *self){
+	if(tonr(&self->tmr)){
+		if(self->i >= self->blen + self->data->signs_count){
+			self->control = scroll_RESET;
 			return;
 		}
-		item->scroll_func(item->data->signs, item->data->signs_count, item->data->buf, item->blen, item->i);
-		item->slave->printSigns(item->slave->self, item->data->signs);
-		item->i++;
+		self->scroll_func(self->data->signs, self->data->signs_count, self->data->buf, self->blen, self->i);
+		self->slave->printSigns(self->slave->self, self->data->signs);
+		self->i++;
 	}
 }
 
-void scroll_start(Scroll *item, size_t blen){
-	item->blen = blen;
-	item->control = scroll_RESET;
+void scroll_start(Scroll *self, size_t blen){
+	self->blen = blen;
+	self->control = scroll_RESET;
 }
 
-void scroll_stop(Scroll *item){
-	item->control = scroll_IDLE;
+void scroll_stop(Scroll *self){
+	self->control = scroll_IDLE;
 }
 
-void scroll_begin(Scroll *item, int kind, iScrollSlave *slave, iScrollData *data){
+void scroll_begin(Scroll *self, int kind, iScrollSlave *slave, iScrollData *data){
 	switch(kind){
-		case SCROLL_KIND_MIN_FIRST: item->scroll_func = scroll_scrollMinFirst; break;
-		case SCROLL_KIND_MAX_FIRST: item->scroll_func = scroll_scrollMaxFirst; break;
-		default: printdln("scroll: bad kind"); item->scroll_func = scroll_scrollNone;
+		case SCROLL_KIND_MIN_FIRST: self->scroll_func = scroll_scrollMinFirst; break;
+		case SCROLL_KIND_MAX_FIRST: self->scroll_func = scroll_scrollMaxFirst; break;
+		default: printdln("scroll: bad kind"); self->scroll_func = scroll_scrollNone;
 	}
-	ton_setInterval(&item->tmr, DISPLAY_SCROLL_INTERVAL_MS);
-	ton_reset(&item->tmr);
-	item->slave = slave;
-	item->data = data;
-	item->control = scroll_IDLE;
+	ton_setInterval(&self->tmr, DISPLAY_SCROLL_INTERVAL_MS);
+	ton_reset(&self->tmr);
+	self->slave = slave;
+	self->data = data;
+	self->control = scroll_IDLE;
 }
 

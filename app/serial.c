@@ -1,5 +1,7 @@
 #include "serial.h"
 
+
+
 static void appSerial_controlIdle(AppSerial *item){
 	;
 }
@@ -8,61 +10,38 @@ static void appSerial_freeIdle(AppSerial *serial){
 	;
 }
 
-void appSerials_reset(AppSerial serials[]){
-	FOREACH_SERIAL(i){
-		AppSerial *serial = &serials[i];
-		serial->id = SERIAL_IDN;
-		serial->mode = SERIAL_MODE_IDLE;
-		serial->device = NULL;
-		serial->controller = NULL;
-		serial->control = appSerial_controlIdle;
-		serial->free = appSerial_freeIdle;
-	}
+void appSerial_reset(AppSerial *self){
+	self->id = SERIAL_ID_NONE;
+	self->mode = SERIAL_MODE_IDLE;
+	self->device = NULL;
+	self->controller = NULL;
+	self->control = appSerial_controlIdle;
+	self->free = appSerial_freeIdle;
 }
 
-void appSerials_init(AppSerial serials[]){
-	appSerials_reset(serials);
-	size_t i = 0;
-#ifdef USE_SERIAL0
-	serials[i].device = &Serial;
-	serials[i].id = SERIAL_ID0; i++;
-#endif
-#ifdef USE_SERIAL1
-	serials[i].device = &Serial1;
-	serials[i].id = SERIAL_ID1; i++;
-#endif
-#ifdef USE_SERIAL2
-	serials[i].device = &Serial2;
-	serials[i].id = SERIAL_ID2; i++;
-#endif
-#ifdef USE_SERIAL3
-	serials[i].device = &Serial3;
-	serials[i].id = SERIAL_ID3; i++;
-#endif
-}
-
-static void appSerial_beginDevice(AppSerialConfig *item, HardwareSerial *serial){
+static void appSerial_beginDevice(AppSerialParam *item, HardwareSerial *serial){
 	if(item->mode != SERIAL_MODE_IDLE){
 		unsigned long rate = serial_getRate(item->rate);
-		serial->begin(rate, item->config);
+		int config = serial_getArduinoConfig(item->config);
+		serial->begin(rate, config);
 		while(!(*serial)){};
 	}
 }
 
 #ifdef SERIAL_SERVER
 static void appSerial_controlServer(AppSerial *item){
-	ACPLS *controller = (ACPLS *) item->controller;
+	Acpls *controller = (Acpls *) item->controller;
 	acpls_control(controller, item->device);
 }
 
 static void appSerial_freeServer(AppSerial *serial){
-	ACPLS *item = (ACPLS *) serial->controller;
+	Acpls *item = (Acpls *) serial->controller;
 	acpls_free(item);
 }
 
 static int appSerial_beginServer(AppSerial *item){
-	ACPLS *controller = NULL;
-	if(!acpls_begin(&controller)) {
+	Acpls *controller = NULL;
+	if(!acpls_begin(&controller, &server_nodes)) {
 		printd("server begin failed where id = "); printdln(item->id);
 		return 0;
 	}
@@ -74,27 +53,27 @@ static int appSerial_beginServer(AppSerial *item){
 #endif
 
 static void appSerial_controlClient(AppSerial *item){
-	ACPLCM *controller = (ACPLCM *) item->controller;
+	Acplcm *controller = (Acplcm *) item->controller;
 	acplcm_control(controller, item->device);
 }
 
 static void appSerial_controlSpy(AppSerial *item){
-	ACPLY *controller = (ACPLY *) item->controller;
+	Acply *controller = (Acply *) item->controller;
 	acply_control(controller, item->device);
 }
 
 static void appSerial_freeSpy(AppSerial *serial){
-	ACPLY *item = (ACPLY *) serial->controller;
+	Acply *item = (Acply *) serial->controller;
 	acply_free(item);
 }
 
 static void appSerial_freeClient(AppSerial *serial){
-	ACPLCM *item = (ACPLCM *) serial->controller;
+	Acplcm *item = (Acplcm *) serial->controller;
 	acplcm_free(item);
 }
 
 static int appSerial_beginClient(AppSerial *item){
-	ACPLCM *controller = NULL;
+	Acplcm *controller = NULL;
 	if(!acplcm_begin(&controller)) return 0;
 	item->controller = (void *) controller;
 	item->control = appSerial_controlClient;
@@ -103,7 +82,7 @@ static int appSerial_beginClient(AppSerial *item){
 }
 
 static int appSerial_beginSpy(AppSerial *item){
-	ACPLY *controller = NULL;
+	Acply *controller = NULL;
 	if(!acply_begin(&controller)) return 0;
 	item->controller = (void *) controller;
 	item->control = appSerial_controlSpy;
@@ -111,40 +90,40 @@ static int appSerial_beginSpy(AppSerial *item){
 	return 1;
 }
 
-int appSerial_beginMode(AppSerial *serial, AppSerialConfig *config, HardwareSerial **serial_debug){
+int appSerial_beginMode(AppSerial *serial, AppSerialParam *param, HardwareSerial **serial_debug){
 	printd("serial "); printd(serial->id);printd(": ");
-	switch (config->mode){
+	switch (param->mode){
 #ifdef SERIAL_SERVER
 		case SERIAL_MODE_SERVER:
-			appSerial_beginDevice(config, serial->device);
+			appSerial_beginDevice(param, serial->device);
 			if(!appSerial_beginServer(serial)){
 				 return ERROR_SERIAL_BEGIN;
 			}
-			serial->mode = config->mode;
+			serial->mode = param->mode;
 			printdln(": server");
 			break;
 #endif
 		case SERIAL_MODE_CLIENT:
-			appSerial_beginDevice(config, serial->device);
+			appSerial_beginDevice(param, serial->device);
 			if(!appSerial_beginClient(serial)){
 				 return ERROR_SERIAL_BEGIN;
 			}
-			serial->mode = config->mode;
+			serial->mode = param->mode;
 			printdln(" client");
 			break;
 		case SERIAL_MODE_SPY:
-			appSerial_beginDevice(config, serial->device);
+			appSerial_beginDevice(param, serial->device);
 			if(!appSerial_beginSpy(serial)){
 				 return ERROR_SERIAL_BEGIN;
 			}
-			serial->mode = config->mode;
+			serial->mode = param->mode;
 			printdln(" spy");
 			break;
 		case SERIAL_MODE_DEBUG:
 			if(*serial_debug == NULL){
-				appSerial_beginDevice(config, serial->device);
+				appSerial_beginDevice(param, serial->device);
 				*serial_debug = serial->device;
-				serial->mode = config->mode;
+				serial->mode = param->mode;
 				printdln(" debug");
 			}
 			break;
@@ -155,19 +134,4 @@ int appSerial_beginMode(AppSerial *serial, AppSerialConfig *config, HardwareSeri
 	return ERROR_NO;
 }
 
-void appSerials_control(AppSerial serials[] ){
-	FOREACH_SERIAL(i){
-		AppSerial *serial = &serials[i];
-		CONTROL(serial);
-	}
-}
 
-AppSerial *appSerials_getClientSerialById(AppSerial serials[], int id){
-	FOREACH_SERIAL(i){
-		AppSerial *serial = &serials[i];
-		if(id == serial->id && serial->mode == SERIAL_MODE_CLIENT){
-			return serial;
-		}
-	}
-	return NULL;
-}

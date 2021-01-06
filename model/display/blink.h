@@ -13,10 +13,12 @@ struct blink_st{
 	void (*control) (Blink *);
 };
 
-extern void blink_start(Blink *item);
+extern void blink_start(Blink *self);
 
-extern void blink_stop(Blink *item);
+extern void blink_stopLow(Blink *self);
 
-extern void blink_begin(Blink *item, iBlink *slave);
+extern void blink_stopHigh(Blink *self);
+
+extern void blink_begin(Blink *self, iBlink *slave);
 
 #endif

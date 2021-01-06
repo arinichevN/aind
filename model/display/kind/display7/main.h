@@ -37,6 +37,6 @@ struct display7_st{
 
 extern Display7 *display7_new();
 
-extern int display7_begin(Display7 *item, int device_kind, int din, int clk, int cs);
+extern int display7_begin(Display7 *self, int device_kind, int din, int clk, int cs);
 
 #endif

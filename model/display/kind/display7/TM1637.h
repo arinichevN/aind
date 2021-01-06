@@ -31,6 +31,6 @@ typedef struct tm1637_st{
 
 extern TM1637 *tm1637_new();
 
-extern void tm1637_begin(TM1637 *item, int dio, int clk);
+extern void tm1637_begin(TM1637 *self, int dio, int clk);
 
 #endif

@@ -53,7 +53,7 @@ const char *getErrorStr(int v){
 		case ERROR_POS2_MODE:				return "Ep2md";
 		case ERROR_POS2_HYS:				return "Ep2hys";
 		case ERROR_PWM:						return "Epwm";
-		case ERROR_PMEM_READ:				return "Epmread";
+		case ERROR_NVRAM_READ:				return "Envread";
 		case ERROR_READ:					return "Eread";
 		case ERROR_CHANNELS:				return "Echns";
 		case ERROR_SERVER_NODES:			return "Esrvnds";
@@ -74,6 +74,7 @@ const char *getErrorStr(int v){
 		case ERROR_TERMOCOUPLE_SC_VCC:		return "Etmcsv";
 		case ERROR_TERMOCOUPLE_SC_GND:		return "Etmcsg";
 		case ERROR_RTC:						return "Ertc";
+		case ERROR_NVRAM:					return "Envram";
 	}
 	return "?";
 }
