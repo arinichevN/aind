@@ -2,13 +2,14 @@
 #define PMEM_H
 
 #include <EEPROM.h>
-#include "../model/channel/param.h"
-#include "../model/channel/llist.h"
-#include "../app/serial_param.h"
-#include "../app/serial.h"
+#include "../lib/crc.h"
+#include "../model/Channel/param.h"
+#include "../model/Channel/llist.h"
+#include "../app/AppSerial/param.h"
+#include "../app/AppSerial/main.h"
 #include "../app/param.h"
 #include "../app.h"
-#include "../util/crc.h"
+
 
 extern int pmem_checkSize();
 

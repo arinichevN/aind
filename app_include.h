@@ -1,47 +1,49 @@
 #ifndef APP_INCLUDE_H
 #define APP_INCLUDE_H
 
-#include "util/debug.h"
-#include "util/common.c"
-#include "util/crc.c"
-#include "util/check.c"
-#include "util/ton.c"
-#include "util/serial.c"
-#include "util/caller_queue.c"
+#include "lib/debug.h"
+#include "lib/common.c"
+#include "lib/crc.c"
+#include "lib/check.c"
+#include "lib/ton.c"
+#include "lib/serial.c"
+#include "lib/caller_queue.c"
+
+#include "lib/acp/main.c"
+#include "lib/acp/loop/main.c"
+#include "lib/acp/loop/client/main.c"
+#include "lib/acp/loop/client/multi.c"
+#include "lib/acp/loop/spy/main.c"
+#ifdef SERIAL_SERVER
+#include "lib/acp/loop/server/main.c"
+#endif
 
 #include "pmem/main.c"
 
-#include "model/display/blink.c"
-#include "model/display/scroll.c"
-#include "model/display/common.c"
-#include "model/display/kind/dserial.c"
-#include "model/display/kind/dsled.c"
-#include "model/display/kind/display7/MAX7219.c"
-#include "model/display/kind/display7/TM1637.c"
-#include "model/display/kind/display7/main.c"
-#include "model/display/main.c"
+#include "model/Blink/main.c"
+#include "model/Scroll/main.c"
+#include "model/Display/common.c"
+#include "model/DSerial/main.c"
+#include "model/DSLed/main.c"
+#include "model/MAX7219/main.c"
+#include "model/TM1637/main.c"
+#include "model/Display7/main.c"
+#include "model/Display/main.c"
 
-#include "model/channel/main.c"
-#include "model/channel/llist.c"
+#include "model/Channel/param.c"
+#include "model/Channel/main.c"
+#include "model/Channel/llist.c"
 
-#include "acp/main.c"
-#include "acp/loop/main.c"
-
-#include "acp/loop/client/main.c"
-#include "acp/loop/client/multi.c"
-#include "acp/loop/spy/main.c"
 
 #ifdef SERIAL_SERVER
-#include "app/server_config.c"
-#include "acp/loop/server/main.c"
+#include "app/serials/server/config.c"
 #endif
-
-#include "app/error_indicator.c"
-#include "app/serial_param.c"
+#include "app/AppErrorIndicator/main.c"
+#include "app/AppSerial/param.c"
+#include "app/AppSerial/main.c"
+#include "app/serials/main.c"
+#include "app/channels/main.c"
 #include "app/param.c"
-#include "app/serial.c"
-#include "app/serials.c"
-#include "app/channels.c"
 #include "app/main.c"
 
 #endif 

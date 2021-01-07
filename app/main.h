@@ -1,22 +1,20 @@
 #ifndef APP_MAIN_H
 #define APP_MAIN_H
 
-#include "../acp/loop/main.h"
-#include "../acp/loop/server/main.h"
-#include "../util/common.h"
-#include "../util/serial.h"
-#include "../model/channel/main.h"
-#include "channels.h"
-#include "serials.h"
-#include "serial_param.h"
+#include "../lib/acp/loop/main.h"
+#include "../lib/acp/loop/server/main.h"
+#include "../lib/common.h"
+#include "../lib/serial.h"
+#include "../model/Channel/main.h"
+#include "channels/main.h"
+#include "serials/main.h"
+#include "AppSerial/param.h"
+#include "AppErrorIndicator/main.h"
 #include "param.h"
-#include "error_indicator.h"
-
 
 extern int app_id;
 extern int app_error_id;
 extern void (*app_control)();
-
 
 extern int appc_checkId(int v);
 

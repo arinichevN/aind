@@ -11,7 +11,7 @@
 /*
  * -user_config:
  * if digitalRead(DEFAULT_CONTROL_PIN) returns BUTTON_DOWN on system startup,
- * all application and channels settings will be set to default values.
+ * all application parameters will be set to default values.
  * You can find default values in ./app/param.c, ./app/serials.c, ./model/channels.c
  * files.
  */
@@ -22,7 +22,7 @@
  * uncomment the following line if you want to enable serial server,
  * this allows you to communicate with device over serial interface
  */
-//#define SERIAL_SERVER
+#define SERIAL_SERVER
 
 /*
  * -user_config:
@@ -58,6 +58,6 @@
  * -user_config:
  * uncomment the following line if you need debug messages:
  */
-//#define MODE_DEBUG
+#define MODE_DEBUG
 
 #endif 

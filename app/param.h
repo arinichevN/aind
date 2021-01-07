@@ -1,7 +1,6 @@
 #ifndef APP_PARAM_H
 #define APP_PARAM_H
 
-#include "serial.h"
 
 /*
  * -user_config:
