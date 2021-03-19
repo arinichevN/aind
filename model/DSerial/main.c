@@ -1,10 +1,10 @@
 #include "main.h"
 
-void dserial_printStr(void *vself, const char *str, int alignment){
+void dserial_printStr(void *vself, const char *str, talign_t alignment){
 	printdln(str);
 }
 
-void dserial_printBlinkStr(void *vself, const char *str, int alignment){
+void dserial_printBlinkStr(void *vself, const char *str, talign_t alignment){
 	printd("BLINK "); printdln(str);
 }
 

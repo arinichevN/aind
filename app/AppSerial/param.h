@@ -3,7 +3,7 @@
 
 typedef struct {
 	int rate;
-	int config;
+	int dps;
 	int mode;
 } AppSerialParam;
 
@@ -16,13 +16,13 @@ typedef struct {
 #define APP_SERIAL_PARAM_DEC_SET_FIELD_FUNC_I(FIELD) extern void APP_SERIAL_PARAM_SET_FIELD_FUNC_I(FIELD)(AppSerialParam *item, int v);
 
 APP_SERIAL_PARAM_DEC_GET_FIELD_FUNC_I(rate)
-APP_SERIAL_PARAM_DEC_GET_FIELD_FUNC_I(config)
+APP_SERIAL_PARAM_DEC_GET_FIELD_FUNC_I(dps)
 APP_SERIAL_PARAM_DEC_GET_FIELD_FUNC_I(mode)
 
 APP_SERIAL_PARAM_DEC_SET_FIELD_FUNC_I(rate)
-APP_SERIAL_PARAM_DEC_SET_FIELD_FUNC_I(config)
+APP_SERIAL_PARAM_DEC_SET_FIELD_FUNC_I(dps)
 APP_SERIAL_PARAM_DEC_SET_FIELD_FUNC_I(mode)
 
-extern  int appSerialParam_check (AppSerialParam *item);
+extern  int appSerialParam_check (AppSerialParam *self);
 	
 #endif

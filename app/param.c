@@ -1,16 +1,22 @@
 #include "param.h"
 
-int appParam_check (AppParam *self){
-	int r = ERROR_NO;
-	return r;
+err_t appParam_check (AppParam *self){
+	err_t err = ERROR_NO;
+#ifdef USE_NOIDS
+	err = noidsParam_check(&self->noids);
+	if(err!=ERROR_NO){
+		return err;
+	}
+#endif
+	return err;
 }
 
 /*
  * -user_config:
- * in this function you can set default configuration for application:
+ * in this function you can set default parameters for application:
  */
 void appParam_setDefault(AppParam *self){
-	self->id = DEFAULT_APP_ID;
+	self->id = 40;
 }
 
 

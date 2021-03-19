@@ -76,32 +76,32 @@ int acplc_getIS(Acplc *self, int cmd, int channel_id, char *out, size_t slen){
 	return ACP_NOT_FOUND;
 }
 
-int acplc_getFTS(Acplc *self, int cmd, int channel_id, FTS *out){
+int acplc_getFts(Acplc *self, int cmd, int channel_id, Fts *out){
 	switch(acplc_getState(self)){
 		case ACP_READ_RESPONSE:case ACP_SEND_REQUEST:
 			return ACP_BUSY;
 		case ACP_DONE:
 			if(!acp_packCheckCRC(self->acpl->buf)){
-				printd("(acplc_getFTS: bad crc)");
+				printd("(acplc_getFts: bad crc)");
 				acplc_reset(self);return ACP_ERROR_CRC;
 			}
 			if(self->acpl->buf[ACP_IND_SIGN] != ACP_SIGN_RESPONSE){
 				acplc_reset(self);return ACP_ERROR_SIGN;
 			}
-			if(!acp_packGetFTS(self->acpl->buf, channel_id, out)){
-				printd("(acplc_getFTS: bad format)");
+			if(!acp_packGetFts(self->acpl->buf, channel_id, out)){
+				printd("(acplc_getFts: bad format)");
 				acplc_reset(self);return ACP_ERROR_FORMAT;
 			}
 			acplc_reset(self);
 			return ACP_DONE;
 		case ACP_IDLE:{
-			//printd("(acplc_getFTS: start)");
+			//printd("(acplc_getFts: start)");
 			int r = acp_buildPackII(self->acpl->buf, ACP_BUF_MAX_LENGTH, ACP_SIGN_REQUEST_GET, cmd, channel_id);
 			if(!r) {acplc_reset(self); return ACP_ERROR;}
 			ACPLC_START(ACPLC_MODE_SEND_READ)
 			return ACP_BUSY;}
 		default:
-			printd("(acplc_getFTS: error)");
+			printd("(acplc_getFts: error)");
 			acplc_reset(self);return ACP_ERROR;
 	}
 	return ACP_NOT_FOUND;

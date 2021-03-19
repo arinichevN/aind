@@ -22,11 +22,4 @@ extern int pmem_saveSerialParam(const AppSerialParam *item, size_t ind);
 extern int pmem_getChannelParam(ChannelParam *item, size_t ind) ;
 extern int pmem_saveChannelParam(const ChannelParam *item, size_t ind);
 
-
-#define PMEMCHANNEL_GET_FIELD_FUNC(FIELD) pmcgff ## FIELD
-#define PMEMCHANNEL_DEF_GET_FIELD_FUNC(FIELD, T) T PMEMCHANNEL_GET_FIELD_FUNC(FIELD)(ChannelParam *item){return item->FIELD;}
-
-#define PMEMCHANNEL_SET_FIELD_FUNC(FIELD) pmcsff ## FIELD
-#define PMEMCHANNEL_DEF_SET_FIELD_FUNC(FIELD, T) void PMEMCHANNEL_SET_FIELD_FUNC(FIELD)(ChannelParam *item, T v){item->FIELD = v;}
-
 #endif 

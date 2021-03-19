@@ -36,7 +36,7 @@ void stw_stop(){
 		if(td > stopwatch_max) stopwatch_max = td;
 		stopwatch_c++;
 	}else{
-		Serial.print("\nMIN: ");Serial.print(stopwatch_min);Serial.print(" MAX: ");Serial.print(stopwatch_max);Serial.println(" (us)");
+		Serial.print("\nMIN: ");Serial.print(stopwatch_min);Serial.print(", MAX: ");Serial.print(stopwatch_max);Serial.println(" (us)");
 		stopwatch_c=0UL;
 		stopwatch_min = ULONG_MAX;
 		stopwatch_max = 0UL;

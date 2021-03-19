@@ -2,69 +2,78 @@
 
 AppSerial serial_buf[SERIAL_COUNT];
 
-AppSerialList serials = {.items = serial_buf, .length = SERIAL_COUNT};
+AppSerialLList serials = LLIST_INITIALIZER;
 
 void serials_reset(){
-	FOREACH_SERIAL
+	FOREACH_SERIAL {
 		appSerial_reset(serial);
 	}
 }
 
 void serials_setStaticParam(){
-	size_t i = 0;
+	AppSerial *serial = serials.top;
+	size_t ind = 0;
 #ifdef USE_SERIAL0
-	serials.items[i].device = &Serial;
-	serials.items[i].id = SERIAL_ID_0; 
-	i++;
+	serial->device = &Serial;
+	serial->id = SERIAL_ID_0; 
+	serial->ind = ind;
+	serial = serial->next;
+	ind++;
 #endif
 #ifdef USE_SERIAL1
-	serials.items[i].device = &Serial1;
-	serials.items[i].id = SERIAL_ID_1;
-	i++;
+	serial->device = &Serial1;
+	serial->id = SERIAL_ID_1;
+	serial->ind = ind;
+	serial = serial->next;
+	ind++;
 #endif
 #ifdef USE_SERIAL2
-	serials.items[i].device = &Serial2;
-	serials.items[i].id = SERIAL_ID_2;
-	i++;
+	serial->device = &Serial2;
+	serial->id = SERIAL_ID_2;
+	serial->ind = ind;
+	serial = serial->next;
+	ind++;
 #endif
 #ifdef USE_SERIAL3
-	serials.items[i].device = &Serial3;
-	serials.items[i].id = SERIAL_ID_3;
-	i++;
+	serial->device = &Serial3;
+	serial->id = SERIAL_ID_3;
+	serial->ind = ind;
+	serial = serial->next;
+	ind++;
 #endif
 }
 
-#define SET_DEFAULT_SERIAL_PARAM(RATE, CONFIG, MODE) param[i].rate = RATE; param[i].config = CONFIG; param[i].mode = MODE; i++;
+#define SET_DEFAULT_SERIAL_PARAM(RATE, DPS, MODE) param[i].rate = RATE; param[i].dps = DPS; param[i].mode = MODE; i++;
 
 int serials_saveDefaultParam(){
 	AppSerialParam param[SERIAL_COUNT];
 	size_t i = 0;
-	int sid = SERIAL_ID_NONE;
 #ifdef USE_SERIAL0
 	
 	//-user_config (see ../util/serial.h for available options):
-	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_CONFIG_8N1, SERIAL_MODE_CLIENT)
+	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_DPS_8N1, SERIAL_MODE_DEBUG)
 	
 #endif
 #ifdef USE_SERIAL1
 	
 	//-user_config (see ../util/serial.h for available options)
-	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_CONFIG_8N1, SERIAL_MODE_CLIENT)
+	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_DPS_8N1, SERIAL_MODE_SERVER)
 	
 #endif
 #ifdef USE_SERIAL2
 	
 	//-user_config (see ../util/serial.h for available options):
-	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_CONFIG_8N1, SERIAL_MODE_IDLE)
+	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_DPS_8N1, SERIAL_MODE_IDLE)
 	
 #endif
 #ifdef USE_SERIAL3
 	
 	//-user_config (see ../util/serial.h for available options):
-	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_CONFIG_8N1, SERIAL_MODE_IDLE)
+	SET_DEFAULT_SERIAL_PARAM(SERIAL_RATE_9600, SERIAL_DPS_8N1, SERIAL_MODE_IDLE)
 #endif
-	FOREACH_SERIAL
-		if(!pmem_saveSerialParam(&param[APP_SERIALS_IND], APP_SERIALS_IND)){
+	FOREACH_SERIAL {
+		size_t ind = serial->ind;
+		if(!pmem_saveSerialParam(&param[ind], ind)){
 			return 0;
 		}
 	}
@@ -72,6 +81,7 @@ int serials_saveDefaultParam(){
 }
 
 int serials_begin(int default_btn){
+	LLIST_BUILD_FROM_ARRAY_N(serials, serial_buf, SERIAL_COUNT)
 	serials_reset();
 	serials_setStaticParam();
 	if(default_btn == BUTTON_DOWN){
@@ -80,9 +90,9 @@ int serials_begin(int default_btn){
 		}
 		printd("set default app param\n");
 	}
-	FOREACH_SERIAL
+	FOREACH_SERIAL {
 		AppSerialParam param;
-		if(!pmem_getSerialParam(&param, APP_SERIALS_IND)){
+		if(!pmem_getSerialParam(&param, serial->ind)){
 			return 0;
 		}
 		if(appSerialParam_check(&param) != ERROR_NO){
@@ -97,19 +107,19 @@ int serials_begin(int default_btn){
 
 
 void serials_control(){
-	FOREACH_SERIAL
+	FOREACH_SERIAL {
 		CONTROL(serial);
 	}
 }
 
 void serials_free(){
-	FOREACH_SERIAL
+	FOREACH_SERIAL {
 		appSerial_free(serial);
 	}
 }
 
 Acplcm *serials_getClientById(int id){
-	FOREACH_SERIAL
+	FOREACH_SERIAL {
 		if(id == serial->id && serial->mode == SERIAL_MODE_CLIENT){
 			return (Acplcm *) serial->controller;
 		}
@@ -118,7 +128,7 @@ Acplcm *serials_getClientById(int id){
 }
 
 Acply *serials_getSpyById(int id){
-	FOREACH_SERIAL
+	FOREACH_SERIAL {
 		if(id == serial->id && serial->mode == SERIAL_MODE_SPY){
 			return (Acply *)serial->controller;
 		}
@@ -127,11 +137,16 @@ Acply *serials_getSpyById(int id){
 }
 
 size_t serials_getIndById(int serial_id){
-	switch(serial_id){
-		case SERIAL_ID_0: if(SERIAL_COUNT > 1) return 0; break;
-		case SERIAL_ID_1: if(SERIAL_COUNT > 2) return 1; break;
-		case SERIAL_ID_2: if(SERIAL_COUNT > 3) return 2; break;
-		case SERIAL_ID_3: if(SERIAL_COUNT > 4) return 3; break;
+	FOREACH_SERIAL {
+		if(serial_id == serial->id){
+			return serial->ind;
+		}
 	}
 	return -1;
 }
+
+#ifdef USE_AOIDS
+void serials_buildAoids(Aoid *next_oid, Aoid *parent_oid, size_t *id){
+	appSerialLList_buildAoids(&serials, next_oid, parent_oid, id);
+}
+#endif

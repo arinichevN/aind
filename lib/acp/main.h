@@ -17,6 +17,7 @@
 #define ACP_CRC_INI					33
 #define ACP_CRC_EXTRA				11
 #define ACP_FLOAT_BUF_LEN			12
+#define ACP_INT_BUF_LEN				12
 
 #define ACP_CHECK_CRC				1
 
@@ -40,7 +41,7 @@
 
 #define ACP_IND_SIGN				1
 
-#define ACP_REQUEST_IND_CMD			1
+#define ACP_REQUEST_IND_COMMAND		1
 #define ACP_REQUEST_IND_ID			2
 #define ACP_REQUEST_IND_PARAM1		3
 #define ACP_REQUEST_IND_PARAM2		4
@@ -95,24 +96,28 @@ extern const char *acp_getStateStr(int v);
 extern int acp_packGetCellS (const char *pack_str, int cell_ind, char *out, size_t len);
 extern int acp_packGetCellI (const char *pack_str, int cell_ind, int *out);
 extern int acp_packGetCellF (const char *pack_str, int cell_ind, double *out);
-extern int acp_packGetFTS(const char *pack_str, int channel_id, FTS *out);
+extern int acp_packGetFts(const char *pack_str, int channel_id, Fts *out);
 
 extern int acp_buildPackS(char *buf, size_t buf_max_len, char sign, const char *v1);
 extern int acp_buildPackSI(char *buf, size_t buf_max_len, char sign, const char *v1, int v2);
 extern int acp_buildPackSF(char *buf, size_t buf_max_len, char sign, const char *v1, double v2);
 extern int acp_buildPackI(char *buf, size_t buf_max_len, char sign, int v);
+extern int acp_buildPackAi(char *buf, size_t buf_max_len, char sign, const int *arr, size_t arr_len);
 extern int acp_buildPackUl(char *buf, size_t buf_max_len, char sign, unsigned long v);
 extern int acp_buildPackF(char *buf, size_t buf_max_len, char sign, double v);
 extern int acp_buildPackIS(char *buf, size_t buf_max_len, char sign, int v1, const char *v2);
 extern int acp_buildPackII(char *buf, size_t buf_max_len, char sign, int v1, int v2);
 extern int acp_buildPackIUl(char *buf, size_t buf_max_len, char sign, int v1, unsigned long v2);
 extern int acp_buildPackIIUl(char *buf, size_t buf_max_len, char sign, int v1, int v2, unsigned long v3);
+extern int acp_buildPackIIUlI(char *buf, size_t buf_max_len, char sign, int v1, int v2, unsigned long v3, int v4);
 extern int acp_buildPackIF(char *buf, size_t buf_max_len, char sign, int v1, double v2);
 extern int acp_buildPackIIF(char *buf, size_t buf_max_len, char sign, int v1, int v2, double v3);
-extern int acp_buildPackIFTS(char *buf, size_t buf_max_len, char sign, int v1, FTS *v2);
+extern int acp_buildPackIFts(char *buf, size_t buf_max_len, char sign, int v1, Fts *v2);
 extern int acp_buildPackIUlI(char *buf, size_t buf_max_len, char sign, int v1, unsigned long v2, int v3);
 extern int acp_buildPackIII(char *buf, size_t buf_max_len, char sign, int v1, int v2, int v3);
 extern int acp_buildPackIIII(char *buf, size_t buf_max_len, char sign, int v1, int v2, int v3, int v4);
+extern int acp_buildPackIIFI(char *buf, size_t buf_max_len, char sign, int v1, int v2, double v3, int v4);
+extern int acp_buildPack5I(char *buf, size_t buf_max_len, char sign, int v1, int v2, int v3, int v4, int v5);
 extern int acp_buildPackIFI(char *buf, size_t buf_max_len, char sign, int v1, double v2, int v3);
 extern int acp_buildPackSII(char *buf, size_t buf_max_len, char sign, const char *v1, int v2, int v3);
 extern int acp_buildPackSIII(char *buf, size_t buf_max_len, char sign, const char *v1, int v2, int v3, int v4);

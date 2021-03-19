@@ -16,8 +16,8 @@
 
 #define PMEM_CRC_INI 17
 
-extern AppSerialList serials;
 extern ChannelLList channels;
+extern AppSerialLList serials;
 
 uint8_t pmem_calcCrc(const void *data, size_t sz){
 	uint8_t crc = PMEM_CRC_INI;
@@ -182,32 +182,6 @@ int pmem_saveAppParam(const AppParam *item){
 	pmem_setAppCrc(item);
 	return 1;
 }
-
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(id, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_kind, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_p1, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_p2, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_p3, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(display_text_alignment, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(serial_id, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(mode, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(remote_id, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(acp_command, int)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(time, unsigned long)
-PMEMCHANNEL_DEF_SET_FIELD_FUNC(float_precision, int)
-
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(display_kind, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(display_p1, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(display_p2, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(display_p3, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(display_text_alignment, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(serial_id, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(mode, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(remote_id, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(acp_command, int)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(time, unsigned long)
-PMEMCHANNEL_DEF_GET_FIELD_FUNC(float_precision, int)
-
 
 
 

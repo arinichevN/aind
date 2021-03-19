@@ -2,57 +2,8 @@
 #define COMMON_H
 
 #define STATE_STR_MAX_LENGTH 16
-#define ACTIVE_STATE_STR "RUN"
-#define UNACTIVE_STATE_STR "OFF"
 
-enum StateE {
-	INIT=0,
-	OFF,
-	FAILURE,
-	DISABLE,
-	RESET, 
-	
-	DONE,
-	RUN,
-	DO,
-	IDLE,
-	BUSY,
-	OUT_MAX,
-	OUT_MIN,
-	WAIT,
-	WAIT_OUT,
-	WAIT_HIGH,
-	WAIT_LOW,
-	WAIT_GAP,
-	BLOCK,
-	LEVEL_HIGH,
-    LEVEL_LOW,
-	
-	WAIT_IN,
-	WAIT_DELAY,
-	
-	COMMAND,
-	LISTEN,
-	
-	SLAVE_START,
-	SLAVE_STOP,
-	
-	SKIP,
-	ON,
-	EDIT,
-	MOVE,
-	READ,
-	SAVE,
-	RAM,
-	NVRAM,
-	DSTEP1,
-	DSTEP2,
-	TEST_UA,
-	SPY,
-	CLIENT
-};
-
-enum ErrorE {
+typedef enum {
 	ERROR_NO = 0,
 	ERROR_FIRST = 1,
 	ERROR_SOME,
@@ -81,7 +32,7 @@ enum ErrorE {
 	ERROR_SERIAL,
 	ERROR_SERIAL_DEVICE,
 	ERROR_SERIAL_RATE,
-	ERROR_SERIAL_CONFIG,
+	ERROR_SERIAL_DPS,
 	ERROR_SERIAL_MODE,
 	ERROR_SERIAL_BEGIN,
 	ERROR_NO_SERIAL,
@@ -96,20 +47,49 @@ enum ErrorE {
 	ERROR_TERMOCOUPLE_SC_GND,
 	ERROR_RTC,
 	ERROR_NVRAM,
+	ERROR_NOID,
+	ERROR_AOID,
+	ERROR_1WIRE,
 	ERROR_COUNT
-};
+} err_t;
 
-#define BUTTON_DOWN 0
-#define BUTTON_UP 1
+#define BUTTON_DOWN		0
+#define BUTTON_UP		1
 
-#define ERROR_NO 0
 typedef enum {
 	NO=0,
 	YES=1
-} EnableE;
+} yn_t;
+
+typedef enum {
+	FAILURE=0,
+	SUCCESS=1
+} sf_t;
+
+typedef enum {
+	OFF=0,
+	ON=1
+} onf_t;
+
+typedef enum {
+	STATE_UNKNOWN=0,
+	STATE_BUSY,
+	STATE_IDLE,
+	STATE_RUN,
+	STATE_OFF,
+	STATE_DONE,
+	STATE_FAILURE,
+	STATE_WAIT,
+	STATE_INIT
+} state_t;
 
 typedef enum {
 	DEVICE_KIND_UNKNOWN=0,
+	DEVICE_KIND_AI18,
+	DEVICE_KIND_AI22,
+	DEVICE_KIND_AI5566,
+	DEVICE_KIND_AOUT,
+	DEVICE_KIND_AIND,
 	DEVICE_KIND_DSERIAL,
 	DEVICE_KIND_MAX6675,
 	DEVICE_KIND_MAX31855,
@@ -124,8 +104,9 @@ typedef enum {
 	DEVICE_KIND_INDICATOR,
 	DEVICE_KIND_MAX7219,
 	DEVICE_KIND_TM1637,
-	DEVICE_KIND_DSLED
-} DeviceKind;
+	DEVICE_KIND_DSLED,
+	DEVICE_KIND_ATD32
+} dk_t;
 
 struct timespec{
 	unsigned long tv_sec;
@@ -135,8 +116,16 @@ struct timespec{
 typedef struct {
 	double value;
 	struct timespec tm;
-	int state;
-} FTS;
+	yn_t success;
+} Fts;
+
+typedef enum {
+	TEXT_ALIGNMENT_UNKNOWN,
+	TEXT_ALIGNMENT_LEFT,
+	TEXT_ALIGNMENT_RIGHT,
+	TEXT_ALIGNMENT_CENTER,
+	TEXT_ALIGNMENT_JUSTIFIED
+} talign_t;
 
 #define ARRLEN(A) (sizeof(A) / sizeof((A)[0]))
 
@@ -147,7 +136,7 @@ typedef struct {
 #define FLOAT_SURROGATE_FORMAT "%d.%.3d"
 #define FLOAT_SURROGATE_DEF(W, F, V) int W = (int)V;	int F = (int)((V - (double)W)*1000);
 
-extern int common_checkBlockStatus(int v);
+extern int checkBlockStatus(yn_t v);
 
 extern void snprinttime(unsigned long v, char *buf, size_t len);
 
@@ -155,6 +144,8 @@ extern struct timespec getCurrentTs();
 
 extern double tsToDouble(struct timespec v);
 
-extern const char *getErrorStr(int v);
+extern const char *getErrorStr(err_t v);
+
+extern const char *getStateStr(state_t v);
 
 #endif 

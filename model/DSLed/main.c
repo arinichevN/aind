@@ -44,7 +44,7 @@ void dsled_blinkHighAll(void *vself);
 
 void dsled_blinkLowAll(void *vself);
 	
-void dsled_printStr(void *vself, const char *str, int alignment){
+void dsled_printStr(void *vself, const char *str, talign_t alignment){
 	DSLed *self = (DSLed *) vself;
 	if(STATE_IS("RUN")){
 		if(self->control == dsled_RUN) return;
@@ -80,7 +80,7 @@ void dsled_printStr(void *vself, const char *str, int alignment){
 }
 
 //indicate an error
-void dsled_printBlinkStr(void *vself, const char *str, int alignment){
+void dsled_printBlinkStr(void *vself, const char *str, talign_t alignment){
 	DSLed *self = (DSLed *) vself;
 	if(self->control == dsled_ERROR) return;
 	TURN_OFF_ALL_LEDS

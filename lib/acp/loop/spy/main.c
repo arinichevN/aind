@@ -8,7 +8,7 @@
 AcplyClient *acply_newClient(){
 	size_t sz = sizeof (AcplyClient);
 	AcplyClient *out = (AcplyClient *) malloc(sz);
-	if(out == NULL){ printdln("acply_newClient: failed");}
+	if(out == NULL){ printdln("acply_newClient: failed"); return out;}
 	printd("acply_newClient: "); printd(sz); printdln(" bytes allocated");
 	out->data = NULL;
 	out->next = NULL;
@@ -137,7 +137,7 @@ void acply_CONSIDER_REQUEST(Acply *self, HardwareSerial *serial) {
 		char sign = acpl->buf[ACP_IND_SIGN];
 		if(sign == ACP_SIGN_REQUEST_GET || sign == ACP_SIGN_REQUEST_SET || sign == ACP_SIGN_REQUEST_SET_BROADCAST || sign == ACP_SIGN_REQUEST_GET_BROADCAST){
 			int cmd;
-			if(!acp_packGetCellI(acpl->buf, ACP_REQUEST_IND_CMD, &cmd)){
+			if(!acp_packGetCellI(acpl->buf, ACP_REQUEST_IND_COMMAND, &cmd)){
 				//printdln("request: failed to read cmd");
 				acply_reset(self); return;
 			}

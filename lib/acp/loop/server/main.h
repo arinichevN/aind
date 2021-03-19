@@ -8,7 +8,7 @@ typedef struct acpls_st Acpls;
 
 typedef struct {
 	int command;
-	void (*func) (Acpls *, HardwareSerial *serial);
+	void (*func) (Acpls *, int);
 } AcplsCommandNode;
 
 DEC_LIST(AcplsCommandNode)
@@ -24,7 +24,7 @@ extern int acpls_begin(Acpls **self, AcplsCommandNodeList *nodes);
 
 extern void acpls_reset(Acpls *self);
 
-extern void acpls_prepWrite(Acpls *self);
+extern void acpls_beginWrite(Acpls *self);
 
 extern void acpls_free(Acpls *self);
 

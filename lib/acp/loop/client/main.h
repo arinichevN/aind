@@ -25,7 +25,7 @@ extern int acplc_sendIIF(Acplc *self, char sign, int v1, int v2, double v3);
 extern int acplc_getBrII(Acplc *self, const char *cmd, int *v1, int *v2);
 	
 extern int acplc_getIS(Acplc *self, int cmd, int channel_id, char *out, size_t slen);
-extern int acplc_getFTS(Acplc *self, int cmd, int channel_id, FTS *out);
+extern int acplc_getFts(Acplc *self, int cmd, int channel_id, Fts *out);
 extern int acplc_getII(Acplc *self, int cmd, int channel_id, int *out);
 extern int acplc_getIF(Acplc *self, int cmd, int channel_id, double *out);
 extern int acplc_getIII(Acplc *self, int cmd, int channel_id, int id2, int *out);

@@ -1,13 +1,14 @@
 #include "main.h"
 
 int app_id;
-int app_error_id;
+dk_t app_device_kind = DEVICE_KIND_AIND;
+err_t app_error_id;
 void (*app_control)();
 
 void app_OFF();
 void app_FAILURE();
 void app_RESET();
-void app_RESET_WAIT_CHANNELS();
+void app_RESET_WAIT_OBJECTS();
 void app_RESET_FREE();
 void app_RUN();
 void app_INIT();
@@ -33,7 +34,7 @@ void app_RESET_FREE(){
 	app_control = app_INIT;
 }
 
-void app_RESET_WAIT_CHANNELS(){
+void app_RESET_WAIT_OBJECTS(){
 	FOREACH_CHANNEL{
 		CONTROL(channel);
 	}
@@ -47,7 +48,7 @@ void app_RESET(){
 	FOREACH_CHANNEL{
 		channel_disconnect(channel);
 	}
-	app_control = app_RESET_WAIT_CHANNELS;
+	app_control = app_RESET_WAIT_OBJECTS;
 }
 
 
@@ -81,7 +82,7 @@ const char *app_getStateStr(){
 	else if(app_control == app_OFF)					return "OFF";
 	else if(app_control == app_RESET)				return "RESET";
 	else if(app_control == app_RESET_FREE)			return "RESET";
-	else if(app_control == app_RESET_WAIT_CHANNELS)	return "RESET";
+	else if(app_control == app_RESET_WAIT_OBJECTS)	return "RESET";
 	else if(app_control == app_INIT)				return "INIT";
 	return "?";
 }
@@ -93,7 +94,10 @@ int appc_checkId(int v){
 int app_setParam(int default_btn){
 	AppParam param;
 	if(default_btn == BUTTON_DOWN){
-		param.id = DEFAULT_APP_ID;
+		appParam_setDefault(&param);
+#ifdef USE_NOIDS
+		noidsParam_setDefault(&param.noids);
+#endif
 		pmem_saveAppParam(&param);
 		printd("set default app param\n");
 	}
@@ -102,11 +106,14 @@ int app_setParam(int default_btn){
 		printd("failed to get app\n");
 		return 0;
 	}
-	r = appParam_check(&param);
-	if(r != ERROR_NO){
+	err_t err = appParam_check(&param);
+	if(err != ERROR_NO){
 		return 0;
 	}
 	app_id = param.id;
+#ifdef USE_NOIDS
+	noids_setParam(&param.noids);
+#endif
 	return 1;
 }
 
@@ -127,15 +134,28 @@ void app_begin(){
 		app_error_id = ERROR_PARAM;
 		goto err;
 	}
-	delay(1000);
+	//delay(1000);
 	if(!serials_begin(default_btn)){
 		app_error_id = ERROR_SERIAL;
 		goto err;
 	}
-	delay(1000);
+	//delay(1000);
 	channels_begin(default_btn);
-	delay(1000);
+	//delay(1000);
+#ifdef USE_AOIDS
+	if(!aoids_begin()){
+		app_error_id = ERROR_AOID;
+		goto err;
+	}
+#endif
+#ifdef USE_NOIDS
+	if(!noids_begin(default_btn)){
+		app_error_id = ERROR_NOID;
+		goto err;
+	}
+#endif
 	app_control = app_RUN;
+	printdln("started");
 	return;
 	
 	err:

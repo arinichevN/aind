@@ -4,8 +4,11 @@
 
 #include "../../lib/acp/loop/client/multi.h"
 #include "../../lib/acp/loop/spy/main.h"
+#ifdef USE_AOIDS
+#include "../../lib/aoid.h"
+#endif
 #include "../../pmem/main.h"
-#include "../AppSerial/main.h"
+#include "../AppSerial/llist.h"
 
 #define S0 0
 #define S1 0
@@ -33,10 +36,10 @@
 #endif
 #define SERIAL_COUNT S0 + S1 + S2 + S3
 
-extern AppSerialList serials;
+extern AppSerialLList serials;
 
 #define APP_SERIALS_IND asrind
-#define FOREACH_SERIAL for(size_t APP_SERIALS_IND = 0; APP_SERIALS_IND<serials.length; APP_SERIALS_IND++) {AppSerial *serial = &serials.items[APP_SERIALS_IND];
+#define FOREACH_SERIAL FOREACH_LLIST_N(serial, serials, AppSerial)
 
 extern void serials_begin();
 
@@ -49,5 +52,9 @@ extern Acplcm *serials_getClientById(int id);
 extern Acply *serials_getSpyById(int id);
 
 extern size_t serials_getIndById(int serial_id);
+
+#ifdef USE_AOIDS
+extern void serials_buildAoids(Aoid *next_oid, Aoid *parent_oid, size_t *id);
+#endif
 
 #endif

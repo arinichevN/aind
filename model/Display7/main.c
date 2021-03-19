@@ -27,7 +27,7 @@ static size_t display7_buildBufOfStrMaxFirst(uint8_t *buf, size_t blen, const ch
 	return j;
 }
 
-int display7_needUpdate(Display7 *self, const char *str, int alignment, int mode){
+int display7_needUpdate(Display7 *self, const char *str, talign_t alignment, int mode){
 	uint8_t buf[DISPLAY_BUF_LEN];
 	size_t blen = self->buildBufOfStr(buf, DISPLAY_BUF_LEN, str);
 	if(alignment != self->alignment || mode != self->mode || memcmp(buf, self->buf, sizeof buf) != 0){
@@ -47,10 +47,10 @@ static void display7_setSignsMinFirst(Display7 *self, const char *str){
 	for (size_t i = 0; i < slen; i++) {
 		size_t ind;
 		switch(self->alignment){
-			case DISPLAY_ALIGNMENT_RIGHT:
+			case TEXT_ALIGNMENT_RIGHT:
 				ind = MIN_FIRST_ALIGNMENT_RIGHT_IND;
 				break;
-			case DISPLAY_ALIGNMENT_LEFT:
+			case TEXT_ALIGNMENT_LEFT:
 			default:
 				ind = MIN_FIRST_ALIGNMENT_LEFT_IND;
 				break;
@@ -66,10 +66,10 @@ static void display7_setSignsMaxFirst(Display7 *self, const char *str){
 	for (size_t i = 0; i < slen; i++) {
 		size_t ind;
 		switch(self->alignment){
-			case DISPLAY_ALIGNMENT_RIGHT:
+			case TEXT_ALIGNMENT_RIGHT:
 				ind = MAX_FIRST_ALIGNMENT_RIGHT_IND;
 				break;
-			case DISPLAY_ALIGNMENT_LEFT:
+			case TEXT_ALIGNMENT_LEFT:
 			default:
 				ind = MAX_FIRST_ALIGNMENT_LEFT_IND;
 				break;
@@ -91,7 +91,7 @@ static void display7_printStrScroll(Display7 *self, const char *str){
 	scroll_start(&self->scroll, self->blen);
 }
 
-void display7_printStr(void *vself, const char *str, int alignment){
+void display7_printStr(void *vself, const char *str, talign_t alignment){
 	Display7 *self = (Display7 *) vself;
 	if(display7_needUpdate(self, str, alignment, DISPLAY_MODE_LIGHT)){
 		blink_stopHigh(&self->blink);
@@ -106,7 +106,7 @@ void display7_printStr(void *vself, const char *str, int alignment){
 	}
 }
 
-void display7_printBlinkStr(void *vself, const char *str, int alignment){
+void display7_printBlinkStr(void *vself, const char *str, talign_t alignment){
 	Display7 *self = (Display7 *) vself;
 	size_t slen = strlen(str);
 	if(display7_needUpdate(self, str, alignment, DISPLAY_MODE_BLINK)){
@@ -242,8 +242,8 @@ int display7_begin(Display7 *self, int device_kind, int p1, int p2, int p3){
 	display7_buildScrollInterface(self);
 	blink_begin(&self->blink, &self->im_blink);
 	scroll_begin(&self->scroll, scroll_kind, i_scroll, &self->im_scroll_data);
-	self->alignment = DISPLAY_ALIGNMENT_LEFT + DISPLAY_ALIGNMENT_RIGHT;
-	self->mode = DISPLAY_MODE_LIGHT + DISPLAY_MODE_BLINK;
+	self->alignment = TEXT_ALIGNMENT_UNKNOWN;
+	self->mode = DISPLAY_MODE_UNKNOWN;
 	self->control = display7_RUN;
 	
 	return 1;

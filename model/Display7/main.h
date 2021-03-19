@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <Arduino.h>
 
+#include "../../lib/common.h"
 #include "../Display/common.h"
 #include "../Blink/main.h"
 #include "../Scroll/main.h"
@@ -20,7 +21,7 @@ struct display7_st{
 	i7Segment *device;
 	size_t (*buildBufOfStr)(uint8_t *, size_t, const char *);
 	void (*setSigns)(Display7 *, const char *);
-	int alignment;
+	talign_t alignment;
 	int mode;
 	//uint8_t brightness;
 	uint8_t *signs;

@@ -1,16 +1,15 @@
 #ifndef APP_PARAM_H
 #define APP_PARAM_H
 
-
-/*
- * -user_config:
- * here you can set some default parameters for
- * application
- */
-#define DEFAULT_APP_ID				40
+#ifdef USE_NOIDS
+#include "noids/param.h"
+#endif
 
 typedef struct {
 	int id;
+#ifdef USE_NOIDS
+	NoidsParam noids;
+#endif
 } AppParam;
 
 #define APP_PARAM_GET_FIELD_FUNC(FIELD) appcgff ## FIELD
@@ -24,8 +23,8 @@ typedef struct {
 APP_PARAM_DEC_GET_FIELD_FUNC(id)
 APP_PARAM_DEC_SET_FIELD_FUNC(id)
 
-extern int appParam_check(AppParam *self);
+extern err_t appParam_check(AppParam *self);
 
 extern void appParam_setDefault(AppParam *self);
-	
+
 #endif

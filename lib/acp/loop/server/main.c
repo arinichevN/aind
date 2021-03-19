@@ -12,7 +12,7 @@ void acpls_SEND_RESPONSE(Acpls *self, HardwareSerial *serial);
 Acpls *acpls_new(){
 	size_t sz = sizeof (Acpls);
 	Acpls *out = (Acpls *) malloc(sz);
-	if(out == NULL){ printdln("acpls_new: failed");}
+	if(out == NULL){ printdln("acpls_new: failed"); return out;}
 	printd("acpls_new: "); printd(sz); printdln(" bytes allocated");
 	return out;
 }
@@ -34,8 +34,8 @@ void acpls_reset(Acpls *self){
 	self->control = acpls_READ_REQUEST;
 }
 
-void acpls_prepWrite(Acpls *self){
-	acpl_prepWrite(self->acpl);
+void acpls_beginWrite(Acpls *self){
+	acpls_beginWrite(self->acpl);
 	self->control = acpls_SEND_RESPONSE;
 }
 
@@ -59,14 +59,14 @@ void acpls_CONSIDER_REQUEST(Acpls *self, HardwareSerial *serial) {
 		char sign = self->acpl->buf[ACP_IND_SIGN];
 		if(sign == ACP_SIGN_REQUEST_GET || sign == ACP_SIGN_REQUEST_SET || sign == ACP_SIGN_REQUEST_SET_BROADCAST || sign == ACP_SIGN_REQUEST_GET_BROADCAST){
 			int cmd;
-			if(acp_packGetCellI(self->acpl->buf, ACP_REQUEST_IND_CMD, &cmd)){
+			if(acp_packGetCellI(self->acpl->buf, ACP_REQUEST_IND_COMMAND, &cmd)){
 				int command_found = 0;
 				for(size_t i = 0; i < self->nodes->length; i++) {
 					AcplsCommandNode *cnode = &self->nodes->items[i];
 					//printd(cmd);printdln(cnode->command);
 					if(cmd == cnode->command){
 						command_found = 1;
-						cnode->func(self, serial);
+						cnode->func(self, cmd);
 						//printdln("server function done");
 						break;
 					}

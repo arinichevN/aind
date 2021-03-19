@@ -13,7 +13,7 @@
 #include "../main.h"
 
 #define ACP_PACK_TIMEOUT_MS			500UL
-#define ACP_BUSY_TIMEOUT_MS			30UL
+#define ACP_BUSY_TIMEOUT_US			100UL
 
 typedef struct {
 	char buf[ACP_BUF_MAX_LENGTH];
@@ -36,9 +36,9 @@ extern int acpl_readResponse(Acpl *self, HardwareSerial *serial);
 
 extern int acpl_readRequest(Acpl *self, HardwareSerial *serial);
 
-extern inline void acpl_prepWrite(Acpl *self);
+extern inline void acpls_beginWrite(Acpl *self);
 
-extern inline void acpl_prepRead(Acpl *self);
+extern inline void acpl_beginRead(Acpl *self);
 
 extern int acpl_write(Acpl *self, HardwareSerial *serial);
 

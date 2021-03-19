@@ -37,11 +37,11 @@ int acplcm_sendIIF(Acplcm *self, void *caller, char sign, int cmd, int channel_i
 }
 
 
-int acplcm_getFTS(Acplcm *self, void *caller, int cmd, int channel_id, FTS *out){
+int acplcm_getFts(Acplcm *self, void *caller, int cmd, int channel_id, Fts *out){
 	int r = cq_control(self->queue, caller);
 	if(r == CINQ_EXISTS) return ACP_WAIT;
 	if(r == CINQ_REJECT) return ACP_ERROR_QUEUE;
-	r = acplc_getFTS(self->acplc, cmd, channel_id, out);
+	r = acplc_getFts(self->acplc, cmd, channel_id, out);
 	switch(r){
 		case ACP_BUSY:
 			break;
@@ -60,6 +60,24 @@ int acplcm_getIS(Acplcm *self, void *caller, int cmd, int channel_id, char *out,
 	if(r == CINQ_EXISTS) return ACP_WAIT;
 	if(r == CINQ_REJECT) return ACP_ERROR_QUEUE;
 	r = acplc_getIS(self->acplc, cmd, channel_id, out, slen);
+	switch(r){
+		case ACP_BUSY:
+			break;
+		case ACP_DONE:
+			cq_out(self->queue);
+			break;
+		default:
+			cq_out(self->queue);
+			break;
+	}
+	return r;
+}
+
+int acplcm_getII(Acplcm *self, void *caller, int cmd, int channel_id, int *out){
+	int r = cq_control(self->queue, caller);
+	if(r == CINQ_EXISTS) return ACP_WAIT;
+	if(r == CINQ_REJECT) return ACP_ERROR_QUEUE;
+	r = acplc_getII(self->acplc, cmd, channel_id, out);
 	switch(r){
 		case ACP_BUSY:
 			break;

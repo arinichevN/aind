@@ -31,8 +31,9 @@ struct acplcm_st {
 
 extern int acplcm_sendII(Acplcm *self, void *caller, char sign, int cmd, int v);
 extern int acplcm_sendIIF(Acplcm *self, void *caller, char sign, int cmd, int channel_id, double v);
-extern int acplcm_getFTS(Acplcm *self, void *caller, int cmd, int channel_id, FTS *out);
+extern int acplcm_getFts(Acplcm *self, void *caller, int cmd, int channel_id, Fts *out);
 extern int acplcm_getIS(Acplcm *self, void *caller, int cmd, int channel_id, char *out, size_t slen);
+extern int acplcm_getII(Acplcm *self, void *caller, int cmd, int channel_id, int *out);
 extern int acplcm_begin(Acplcm **self);
 extern void acplcm_free(Acplcm *self);
 extern void acplcm_control(Acplcm *self, HardwareSerial *serial);

@@ -151,10 +151,10 @@ int acp_packGetCellUl(const char *pack_str, int cell_ind, unsigned long *out){
 	return 0;
 }
 
-//int acp_packGetFTS(const char *pack_str, int channel_id, FTS *out){
+//int acp_packGetFts(const char *pack_str, int channel_id, Fts *out){
 	//int tchannel_id;
-	//FTS tout;
-	//int n = sscanf(pack_str, ACP_DELIMITER_START_STR "%d" ACP_DELIMITER_COLUMN_STR "%f" ACP_DELIMITER_COLUMN_STR "%lu" ACP_DELIMITER_COLUMN_STR "%lu" ACP_DELIMITER_COLUMN_STR "%d" ACP_DELIMITER_COLUMN_STR, &tchannel_id, &tout.value, &tout.tm.tv_sec, &tout.tm.tv_nsec, &tout.state );
+	//Fts tout;
+	//int n = sscanf(pack_str, ACP_DELIMITER_START_STR "%d" ACP_DELIMITER_COLUMN_STR "%f" ACP_DELIMITER_COLUMN_STR "%lu" ACP_DELIMITER_COLUMN_STR "%lu" ACP_DELIMITER_COLUMN_STR "%d" ACP_DELIMITER_COLUMN_STR, &tchannel_id, &tout.value, &tout.tm.tv_sec, &tout.tm.tv_nsec, &tout.success );
 	//if (n == 5){
 		//if(channel_id == tchannel_id){
 			//*out = tout;
@@ -164,37 +164,43 @@ int acp_packGetCellUl(const char *pack_str, int cell_ind, unsigned long *out){
 	//return 0;
 //}
 
-int acp_packGetFTS(const char *pack_str, int channel_id, FTS *out){
-	printdln(pack_str);
+int acp_packGetFts(const char *pack_str, int channel_id, Fts *out){
+	//printdln(pack_str);
 	if(pack_str[ACP_IND_SIGN] != ACP_SIGN_RESPONSE){
-		printd("acp_packGetFTS: bad sign: "); printdln(pack_str[ACP_IND_SIGN]);
+		printd("acp_packGetFts: bad sign: "); printdln(pack_str[ACP_IND_SIGN]);
 		return 0;
 	}
 	int tchannel_id;
 	if(!acp_packGetCellI (pack_str, ACP_RESPONSE_IND_ID, &tchannel_id)){
-		printdln("acp_packGetFTS: failed to get channel_id");
+		printdln("acp_packGetFts: failed to get channel_id");
 		return 0;
 	}
 	if(channel_id != tchannel_id){
-		printd("acp_packGetFTS: bad channel_id "); printd(channel_id); printd(" "); printdln(tchannel_id);
+		printd("acp_packGetFts: bad channel_id "); printd(channel_id); printd(" "); printdln(tchannel_id);
 		return 0;
 	}
-	FTS tout;
+	Fts tout;
 	if(!acp_packGetCellF (pack_str, ACP_RESPONSE_IND_PARAM1, &tout.value)){
-		printdln("acp_packGetFTS: failed to get value");
+		printdln("acp_packGetFts: failed to get value");
 		return 0;
 	}
 	if(!acp_packGetCellUl (pack_str, ACP_RESPONSE_IND_PARAM2, &tout.tm.tv_sec)){
-		printdln("acp_packGetFTS: failed to get tv_sec");
+		printdln("acp_packGetFts: failed to get tv_sec");
 		return 0;
 	}
 	if(!acp_packGetCellUl (pack_str, ACP_RESPONSE_IND_PARAM3, &tout.tm.tv_nsec)){
-		printdln("acp_packGetFTS: failed to get tv_nsec");
+		printdln("acp_packGetFts: failed to get tv_nsec");
 		return 0;
 	}
-	if(!acp_packGetCellI (pack_str, ACP_RESPONSE_IND_PARAM4, &tout.state)){
-		printdln("acp_packGetFTS: failed to get state");
+	int success;
+	if(!acp_packGetCellI (pack_str, ACP_RESPONSE_IND_PARAM4, &success)){
+		printdln("acp_packGetFts: failed to get state");
 		return 0;
+	}
+	if (success == YES || success == NO){
+		tout.success = (yn_t) success;
+	} else{
+		tout.success = NO;
 	}
 	*out = tout;
 	return 1;
@@ -217,7 +223,8 @@ int acp_buildPackSI(char *buf, size_t buf_max_len, char sign, const char *v1, in
 }
 
 int acp_buildPackSF(char *buf, size_t buf_max_len, char sign, const char *v1, double v2){
-	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%s" ADCS "%f" ADCS, sign, v1, v2 );
+	FLOAT_SURROGATE_DEF(wv, fv, v2)
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%s" ADCS FLOAT_SURROGATE_FORMAT ADCS, sign, v1, wv, fv );
 	if(r > 0 && r < (int) buf_max_len){
 		return acp_addCRC(buf, buf_max_len);
 	}
@@ -232,6 +239,29 @@ int acp_buildPackI(char *buf, size_t buf_max_len, char sign, int v){
 	return 0;
 }
 
+int acp_buildPackAi(char *buf, size_t buf_max_len, char sign, const int *arr, size_t arr_len){
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS, sign);
+	if(r < 0 || r >= (int) buf_max_len){
+		printdln("acp_buildPackAi: failed to write");
+		return 0;
+	}
+	size_t l = strlen(buf);
+	char *b = &buf[l];
+	size_t bml = buf_max_len - l;
+	for(size_t i=0; i<arr_len; i++){
+		if(bml <= ACP_INT_BUF_LEN) return 0;
+		r = snprintf(b, bml, "%d" ADCS, arr[i]);
+		if(r < 0 || r >= (int) bml){
+			printdln("acp_buildPackAi: failed to write");
+			return 0;
+		}
+		l = strlen(b);
+		b = &b[l];
+		bml = bml - l;
+	}
+	return acp_addCRC(buf, buf_max_len);
+}
+
 int acp_buildPackUl(char *buf, size_t buf_max_len, char sign, unsigned long v){
 	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%lu" ADCS, sign, v );
 	if(r > 0 && r < (int) buf_max_len){
@@ -241,7 +271,8 @@ int acp_buildPackUl(char *buf, size_t buf_max_len, char sign, unsigned long v){
 }
 
 int acp_buildPackF(char *buf, size_t buf_max_len, char sign, double v){
-	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%f" ADCS, sign, v );
+	FLOAT_SURROGATE_DEF(wv, fv, v)
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS FLOAT_SURROGATE_FORMAT ADCS, sign, wv, fv );
 	if(r > 0 && r < (int) buf_max_len){
 		return acp_addCRC(buf, buf_max_len);
 	}
@@ -272,6 +303,23 @@ int acp_buildPackIIII(char *buf, size_t buf_max_len, char sign, int v1, int v2, 
 	return 0;
 }
 
+int acp_buildPackIIFI(char *buf, size_t buf_max_len, char sign, int v1, int v2, double v3, int v4){
+	FLOAT_SURROGATE_DEF(wv, fv, v3)
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS "%d" ADCS FLOAT_SURROGATE_FORMAT ADCS "%d" ADCS, sign, v1, v2, wv, fv, v4 );
+	if(r > 0 && r < (int) buf_max_len){
+		return acp_addCRC(buf, buf_max_len);
+	}
+	return 0;
+}
+
+int acp_buildPack5I(char *buf, size_t buf_max_len, char sign, int v1, int v2, int v3, int v4, int v5){
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS "%d" ADCS "%d" ADCS "%d" ADCS "%d" ADCS, sign, v1, v2, v3, v4, v5 );
+	if(r > 0 && r < (int) buf_max_len){
+		return acp_addCRC(buf, buf_max_len);
+	}
+	return 0;
+}
+
 int acp_buildPackIUl(char *buf, size_t buf_max_len, char sign, int v1, unsigned long v2){
 	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS "%lu" ADCS, sign, v1, v2 );
 	if(r > 0 && r < (int) buf_max_len){
@@ -282,6 +330,14 @@ int acp_buildPackIUl(char *buf, size_t buf_max_len, char sign, int v1, unsigned 
 
 int acp_buildPackIIUl(char *buf, size_t buf_max_len, char sign, int v1, int v2, unsigned long v3){
 	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS "%d" ADCS "%lu" ADCS, sign, v1, v2, v3 );
+	if(r > 0 && r < (int) buf_max_len){
+		return acp_addCRC(buf, buf_max_len);
+	}
+	return 0;
+}
+
+int acp_buildPackIIUlI(char *buf, size_t buf_max_len, char sign, int v1, int v2, unsigned long v3, int v4){
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS "%d" ADCS "%lu" ADCS "%d" ADCS, sign, v1, v2, v3, v4 );
 	if(r > 0 && r < (int) buf_max_len){
 		return acp_addCRC(buf, buf_max_len);
 	}
@@ -306,10 +362,10 @@ int acp_buildPackIIF(char *buf, size_t buf_max_len, char sign, int v1, int v2, d
 	return 0;
 }
 
-int acp_buildPackIFTS(char *buf, size_t buf_max_len, char sign, int v1, FTS *v2){
+int acp_buildPackIFts(char *buf, size_t buf_max_len, char sign, int v1, Fts *v2){
 	double dv = v2->value;
 	FLOAT_SURROGATE_DEF(wv, fv, dv)
-	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS FLOAT_SURROGATE_FORMAT ADCS "%lu" ADCS "%lu" ADCS "%d" ADCS, sign, v1, wv, fv, v2->tm.tv_sec, v2->tm.tv_nsec, v2->state );
+	int r = snprintf(buf, buf_max_len, ADSS "%c" ADCS "%d" ADCS FLOAT_SURROGATE_FORMAT ADCS "%lu" ADCS "%lu" ADCS "%d" ADCS, sign, v1, wv, fv, v2->tm.tv_sec, v2->tm.tv_nsec, v2->success );
 	if(r > 0 && r < (int) buf_max_len){
 		return acp_addCRC(buf, buf_max_len);
 	}

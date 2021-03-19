@@ -12,6 +12,7 @@
 #include "../../app/serials/main.h"
 #include "../../pmem/main.h"
 #include "../Display/main.h"
+#include "common.h"
 #include "param.h"
 
 #define CHANNEL_DISPLAY_ROWS			16
@@ -30,28 +31,34 @@
 typedef struct channel_st Channel;
 struct channel_st {
 	int id;
-	int enable;
+	yn_t enable;
 	
-	int display_text_alignment;
+	talign_t display_text_alignment;
 	
 	int remote_id;
 	unsigned long time;
-	int mode;
+	channel_mode mode;
 	int acp_command;
 	int serial_id;
 	int float_precision;
 	
-	void (*control)(Channel *);
-	
-	int device_kind;
+	dk_t device_kind;
 	int need_spy_response;
 	Acplcm *serial_client;
 	iAcplyClient im_spy_client;
 	Display display;
 	void (*parseNshowSpyData)(Channel *, char *buf);
 	int (*parseNShowSpyRequestData)(Channel *, char *buf);
+	const char *(*intToStr)(int);
 	void (*control_next)(Channel *);
-	int error_id;
+#ifdef USE_AOIDS
+	ChannelAoid aoid;
+#endif
+#ifdef USE_NOIDS
+	Noid noid;
+#endif
+	void (*control)(Channel *);
+	err_t error_id;
 	Ton tmr;
 	size_t ind;
 	Channel *next;
@@ -60,8 +67,8 @@ struct channel_st {
 #define CHANNEL_SAVE_FIELD(F) ChannelParam pchannel; if(pmem_getChannelParam(&pchannel, self->ind)){pchannel.F = self->F; pmem_saveChannelParam(&pchannel, self->ind);}
 #define CHANNEL_FUN_GET(param) channel_get_ ## param
 
-extern const char *channel_getStateStr(Channel *self);
-extern const char *channel_getErrorStr(Channel *self);
+extern state_t channel_getState(Channel *self);
+extern err_t channel_getError(Channel *self);
 extern void channel_begin(Channel *self, size_t ind);
 extern int channel_start(Channel *self);
 extern int channel_stop(Channel *self);
@@ -70,19 +77,17 @@ extern int channel_reset(Channel *self);
 extern void channel_free(Channel *self);
 extern void channel_serverPrint(Channel *self, const char *str);
 extern void channel_serverPrintBlink(Channel *self, const char *str);
+extern dk_t channel_getDisplayKind(Channel *self);
+extern int channel_getDisplayP1(Channel *self);
+extern int channel_getDisplayP2(Channel *self);
+extern int channel_getDisplayP3(Channel *self);
 
-extern int CHANNEL_FUN_GET(enable)(Channel *self);
-extern int CHANNEL_FUN_GET(device_kind)(Channel *self);
-extern int CHANNEL_FUN_GET(display_kind)(Channel *self);
-extern int CHANNEL_FUN_GET(display_p1)(Channel *self);
-extern int CHANNEL_FUN_GET(display_p2)(Channel *self);
-extern int CHANNEL_FUN_GET(display_p3)(Channel *self);
-extern int CHANNEL_FUN_GET(display_text_alignment)(Channel *self);
-extern int CHANNEL_FUN_GET(serial_id)(Channel *self);
-extern int CHANNEL_FUN_GET(mode)(Channel *self);
-extern int CHANNEL_FUN_GET(remote_id)(Channel *self);
-extern int CHANNEL_FUN_GET(acp_command)(Channel *self);
-extern unsigned long CHANNEL_FUN_GET(time)(Channel *self);
-extern int CHANNEL_FUN_GET(float_precision)(Channel *self);
+#ifdef USE_AOIDS
+extern void channel_buildAoids(Channel *self, Aoid *next_oid, Aoid *parent_oid, size_t *id);
+#endif
+
+#ifdef USE_NOIDS
+extern Noid *channel_buildNoids(Channel *self);
+#endif
 
 #endif 

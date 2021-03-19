@@ -1,6 +1,6 @@
 #include "common.h"
 
-int common_checkBlockStatus(int v){
+int checkBlockStatus(yn_t v){
 	switch(v){
 		case YES:return 1;
 		case NO:return 1;
@@ -33,12 +33,13 @@ double tsToDouble(struct timespec v){
 	return out;
 }
 
-const char *getErrorStr(int v){
+const char *getErrorStr(err_t v){
 	switch(v){
 		case ERROR_NO:						return "no";
 		case ERROR_SOME:					return "Esome";
 		case WARNING_READ:					return "Wread";
 		case WARNING_BAD_DATA:				return "Wdata";
+		case ERROR_PARAM:					return "Eparam";
 		case ERROR_SUBBLOCK:				return "Esubb";
 		case ERROR_BLOCK_STATUS:			return "Ebstat";
 		case ERROR_DEVICE_KIND:				return "Edevkn";
@@ -60,7 +61,7 @@ const char *getErrorStr(int v){
 		case ERROR_SERIAL:					return "Eserial";
 		case ERROR_SERIAL_DEVICE:			return "Eseriald";
 		case ERROR_SERIAL_RATE:				return "Eserialr";
-		case ERROR_SERIAL_CONFIG:			return "Eserialc";
+		case ERROR_SERIAL_DPS:				return "Eseriald";
 		case ERROR_SERIAL_MODE:				return "Eserialm";
 		case ERROR_SERIAL_BEGIN:			return "Eserialb";
 		case ERROR_NO_SERIAL:				return "Enoser";
@@ -75,6 +76,25 @@ const char *getErrorStr(int v){
 		case ERROR_TERMOCOUPLE_SC_GND:		return "Etmcsg";
 		case ERROR_RTC:						return "Ertc";
 		case ERROR_NVRAM:					return "Envram";
+		case ERROR_NOID:					return "Enoid";
+		case ERROR_AOID:					return "Eaoid";
+		case ERROR_1WIRE:					return "E1wire";
+		default:break;
+	}
+	return "?";
+}
+
+const char *getStateStr(state_t v){
+	switch(v){
+		case STATE_UNKNOWN:		return "UNKNOWN";
+		case STATE_BUSY:		return "BUSY";
+		case STATE_IDLE:		return "IDLE";
+		case STATE_RUN:			return "RUN";
+		case STATE_OFF:			return "OFF";
+		case STATE_DONE:		return "DONE";
+		case STATE_FAILURE:		return "FAILURE";
+		case STATE_WAIT:		return "WAIT";
+		case STATE_INIT:		return "INIT";
 	}
 	return "?";
 }

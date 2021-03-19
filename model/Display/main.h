@@ -10,13 +10,13 @@
 
 typedef struct {
 	iDisplay *device;
-	int kind;
+	dk_t kind;
 	int p1;
 	int p2;
 	int p3;
 } Display;
 
-extern int display_begin(Display *self, int device_kind, int p1, int p2, int p3);
+extern int display_begin(Display *self, dk_t device_kind, int p1, int p2, int p3);
 
 extern void display_free(Display *self);
 

@@ -1,6 +1,6 @@
 #include "main.h"
 
-static void display_setParam(Display *self, int kind, iDisplay *device){
+static void display_setParam(Display *self, dk_t kind, iDisplay *device){
 	self->kind = kind;
 	self->device = device;
 }
@@ -10,7 +10,7 @@ void display_free(Display *self){
 	free(self->device);
 }
 
-int display_begin(Display *self, int device_kind, int p1, int p2, int p3){
+int display_begin(Display *self, dk_t device_kind, int p1, int p2, int p3){
 	self->device = NULL;
 	self->kind = DEVICE_KIND_UNKNOWN;
 	self->p1 = p1; self->p2 = p2; self->p3 = p3;
@@ -49,6 +49,8 @@ int display_begin(Display *self, int device_kind, int p1, int p2, int p3){
 				display_setParam(self, device_kind, &device->im_display);
 			}
 			return 1;
+		default:
+			break;
 	}
 	return 0;
 }

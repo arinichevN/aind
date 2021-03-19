@@ -12,7 +12,7 @@ void acplc_ERROR(Acplc *self, HardwareSerial *serial);
 Acplc *acplc_new(){
 	size_t sz = sizeof (Acplc);
 	Acplc *out = (Acplc *) malloc(sz);
-	if(out == NULL){ printdln("acplc_new: failed");}
+	if(out == NULL){ printdln("acplc_new: failed"); return out;}
 	printd("acplc_new: "); printd(sz); printdln(" bytes allocated");
 	return out;
 }
@@ -74,7 +74,7 @@ void acplc_SEND_REQUEST(Acplc *self, HardwareSerial *serial){
 					self->control = acplc_DONE;
 					return;
 				case ACPLC_MODE_SEND_READ:
-					acpl_prepRead(self->acpl);
+					acpl_beginRead(self->acpl);
 					self->control = acplc_READ_RESPONSE;
 					return;
 				default:
